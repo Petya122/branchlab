@@ -29,8 +29,14 @@ import {
   awardTrophy,
   calculateDevOpsLevel,
   loadTrophyState,
+  saveTrophyState,
   type TrophyState,
 } from './utils/trophies'
+import {
+  loadSettings,
+  saveSettings,
+  type SettingsState,
+} from './utils/settings'
 import { GitCanvas } from './components/GitCanvas'
 import { PipelineViewer } from './components/PipelineViewer'
 import { TerminalConsole } from './components/TerminalConsole'
@@ -39,6 +45,8 @@ import { MergeConflictModal } from './components/MergeConflictModal'
 import { PullRequestModal } from './components/PullRequestModal'
 import { TrophyRoomModal } from './components/TrophyRoomModal'
 import { TutorialModal } from './components/TutorialModal'
+import { SettingsModal } from './components/SettingsModal'
+import { HomePage } from './components/HomePage'
 import {
   GitBranch,
   GitCommit,
@@ -51,11 +59,22 @@ import {
   GitPullRequest,
   AlertTriangle,
   HelpCircle,
+  Settings as SettingsIcon,
+  Home,
+  Cpu,
 } from 'lucide-react'
 
 export const App: React.FC = () => {
-  const [model, setModel] = useState<BranchingModel>('gitflow')
-  const [gitState, setGitState] = useState<GitGraphState>(() => getInitialGitState('gitflow'))
+  // Navigation View: 'home' or 'lab'
+  const [currentView, setCurrentView] = useState<'home' | 'lab'>('home')
+
+  // Settings
+  const [settings, setSettings] = useState<SettingsState>(() => loadSettings())
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
+  // Branching Model & Git State
+  const [model, setModel] = useState<BranchingModel>(() => settings.defaultModel)
+  const [gitState, setGitState] = useState<GitGraphState>(() => getInitialGitState(settings.defaultModel))
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null)
 
   // Gamification & Trophies (Persisted in browser localStorage)
@@ -120,6 +139,27 @@ export const App: React.FC = () => {
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false)
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false)
 
+  // Settings Handlers
+  const handleUpdateSettings = (nextSettings: SettingsState) => {
+    setSettings(nextSettings)
+    saveSettings(nextSettings)
+  }
+
+  const handleResetTrophies = () => {
+    const clean: TrophyState = { xp: 0, unlockedIds: [], unlockedDates: {} }
+    setTrophyState(clean)
+    saveTrophyState(clean)
+  }
+
+  const handleResetTour = () => {
+    try {
+      localStorage.removeItem('branchlab_tutorial_seen')
+    } catch {
+      // Ignore
+    }
+    setIsTutorialOpen(true)
+  }
+
   // When model changes, reset graph
   const handleModelChange = (newModel: BranchingModel) => {
     setModel(newModel)
@@ -166,6 +206,7 @@ export const App: React.FC = () => {
 
     let hasFailed = false
     const updatedStages = [...currentRun.stages]
+    const delayMs = settings.animationSpeed === 'fast' ? 220 : settings.animationSpeed === 'relaxed' ? 650 : 420
 
     for (let i = 0; i < updatedStages.length; i++) {
       const stage = updatedStages[i]
@@ -175,8 +216,7 @@ export const App: React.FC = () => {
       setSelectedStageId(stage.id)
       setPipelineRun({ ...currentRun, stages: [...updatedStages] })
 
-      // Artificial realistic delay (350ms - 550ms)
-      await new Promise((r) => setTimeout(r, 450))
+      await new Promise((r) => setTimeout(r, delayMs))
 
       const fails = shouldStageFail(stage.id, chaosConfig)
       const stageLogs = generateStageLogs(
@@ -187,7 +227,7 @@ export const App: React.FC = () => {
       )
 
       stage.logs = stageLogs
-      stage.durationMs = 400 + Math.floor(Math.random() * 200)
+      stage.durationMs = 380 + Math.floor(Math.random() * 150)
 
       setLogs((prev) => [...prev, ...stageLogs])
 
@@ -214,7 +254,6 @@ export const App: React.FC = () => {
       // Award Quality Gatekeeper trophy
       triggerTrophy('quality-gatekeeper')
 
-      // Celebration confetti for successful release
       confetti({
         particleCount: 60,
         spread: 60,
@@ -240,7 +279,6 @@ export const App: React.FC = () => {
       `$ git commit -m "${message}"`,
       `[${newCommit.branch} ${newCommit.hash}] ${message}`,
     ])
-    // Auto-prepare new pipeline run
     setPipelineRun(
       createInitialPipelineRun(newCommit.hash, newCommit.message, newCommit.branch)
     )
@@ -443,12 +481,22 @@ export const App: React.FC = () => {
       {/* Top Navigation */}
       <header className="navbar">
         <div className="brand-section">
-          <div className="brand-logo">
+          <div
+            className="brand-logo"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setCurrentView('home')}
+            title="Go to Homepage"
+          >
             <Layers size={22} />
           </div>
           <div className="brand-info">
             <h1>
-              BranchLab
+              <span
+                style={{ cursor: 'pointer' }}
+                onClick={() => setCurrentView('home')}
+              >
+                BranchLab
+              </span>
               <a
                 href="https://branchlab.me"
                 target="_blank"
@@ -463,221 +511,263 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Branching Strategy Switcher */}
+        {/* View Switcher: Home vs Interactive Lab */}
         <div className="model-selector">
           <button
-            className={`model-button ${model === 'gitflow' ? 'active' : ''}`}
-            onClick={() => handleModelChange('gitflow')}
+            className={`model-button ${currentView === 'home' ? 'active' : ''}`}
+            onClick={() => setCurrentView('home')}
           >
-            <GitBranch size={13} />
-            GitFlow
+            <Home size={13} />
+            Home
           </button>
           <button
-            className={`model-button ${model === 'trunk-based' ? 'active' : ''}`}
-            onClick={() => handleModelChange('trunk-based')}
+            className={`model-button ${currentView === 'lab' ? 'active' : ''}`}
+            onClick={() => setCurrentView('lab')}
           >
-            <GitCommit size={13} />
-            Trunk-Based
-          </button>
-          <button
-            className={`model-button ${model === 'github-flow' ? 'active' : ''}`}
-            onClick={() => handleModelChange('github-flow')}
-          >
-            <GitMerge size={13} />
-            GitHub Flow
+            <Cpu size={13} />
+            Interactive Lab
           </button>
         </div>
 
-        {/* DevOps Rank & Trophy Widget */}
-        <button
-          className="action-btn btn-ghost"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            border: '1px solid rgba(245, 158, 11, 0.35)',
-            background: 'rgba(245, 158, 11, 0.08)',
-          }}
-          onClick={() => setIsTrophyModalOpen(true)}
-          title="Open DevOps Trophy Room"
-        >
-          <Trophy size={14} color="#f59e0b" />
-          <span style={{ fontSize: '11px', fontWeight: '700', color: '#f59e0b' }}>
-            Lvl {currentLevel.level} • {trophyState.xp} XP
-          </span>
-        </button>
+        {/* In Lab Mode: Branching Strategy Switcher */}
+        {currentView === 'lab' && (
+          <div className="model-selector">
+            <button
+              className={`model-button ${model === 'gitflow' ? 'active' : ''}`}
+              onClick={() => handleModelChange('gitflow')}
+            >
+              <GitBranch size={13} />
+              GitFlow
+            </button>
+            <button
+              className={`model-button ${model === 'trunk-based' ? 'active' : ''}`}
+              onClick={() => handleModelChange('trunk-based')}
+            >
+              <GitCommit size={13} />
+              Trunk-Based
+            </button>
+            <button
+              className={`model-button ${model === 'github-flow' ? 'active' : ''}`}
+              onClick={() => handleModelChange('github-flow')}
+            >
+              <GitMerge size={13} />
+              GitHub Flow
+            </button>
+          </div>
+        )}
 
-        {/* Guided Tutorial Tour Button */}
-        <button
-          className="action-btn btn-ghost"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            border: '1px solid rgba(56, 189, 248, 0.35)',
-            background: 'rgba(56, 189, 248, 0.08)',
-            color: '#38bdf8',
-          }}
-          onClick={() => setIsTutorialOpen(true)}
-          title="Open Guided Tutorial Tour"
-        >
-          <HelpCircle size={14} />
-          <span style={{ fontSize: '11px', fontWeight: '700' }}>Tour</span>
-        </button>
+        {/* Right Navbar Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* DevOps Rank & Trophy Widget */}
+          <button
+            className="action-btn btn-ghost"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              background: 'rgba(245, 158, 11, 0.08)',
+            }}
+            onClick={() => setIsTrophyModalOpen(true)}
+            title="Open DevOps Trophy Room"
+          >
+            <Trophy size={14} color="#f59e0b" />
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#f59e0b' }}>
+              Lvl {currentLevel.level} • {trophyState.xp} XP
+            </span>
+          </button>
 
-        {/* Quick Actions */}
-        <div className="nav-actions">
+          {/* Guided Tutorial Tour Button */}
           <button
             className="action-btn btn-ghost"
-            onClick={() => setIsCommitModalOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              background: 'rgba(56, 189, 248, 0.08)',
+              color: '#38bdf8',
+            }}
+            onClick={() => setIsTutorialOpen(true)}
+            title="Open Guided Tutorial Tour"
           >
-            <GitCommit size={14} color="#38bdf8" />
-            Commit
+            <HelpCircle size={14} />
+            <span style={{ fontSize: '11px', fontWeight: '700' }}>Tour</span>
           </button>
+
+          {/* Settings Button */}
           <button
             className="action-btn btn-ghost"
-            onClick={() => setIsBranchModalOpen(true)}
+            style={{ padding: '7px 10px' }}
+            onClick={() => setIsSettingsOpen(true)}
+            title="Open Settings"
           >
-            <GitBranch size={14} color="#a855f7" />
-            Branch
-          </button>
-          <button
-            className="action-btn btn-ghost"
-            onClick={() => setIsMergeModalOpen(true)}
-          >
-            <GitMerge size={14} color="#10b981" />
-            Merge
-          </button>
-          <button
-            className="action-btn btn-ghost"
-            style={{ border: '1px solid rgba(168, 85, 247, 0.3)' }}
-            onClick={() => setIsPrModalOpen(true)}
-            title="Simulate GitHub Pull Request & Branch Protection"
-          >
-            <GitPullRequest size={14} color="#c084fc" />
-            Pull Request
-          </button>
-          <button
-            className="action-btn btn-ghost"
-            style={{ border: '1px solid rgba(245, 158, 11, 0.3)' }}
-            onClick={() => setIsConflictModalOpen(true)}
-            title="Simulate Interactive Git Merge Conflict"
-          >
-            <AlertTriangle size={14} color="#f59e0b" />
-            Conflict
-          </button>
-          <button
-            className="action-btn btn-primary"
-            onClick={handleRunPipeline}
-            disabled={isPipelineRunning}
-          >
-            <Play size={14} />
-            Run CI/CD
+            <SettingsIcon size={15} color="var(--text-secondary)" />
           </button>
         </div>
+
+        {/* Quick Actions (only in Lab view) */}
+        {currentView === 'lab' && (
+          <div className="nav-actions">
+            <button
+              className="action-btn btn-ghost"
+              onClick={() => setIsCommitModalOpen(true)}
+            >
+              <GitCommit size={14} color="#38bdf8" />
+              Commit
+            </button>
+            <button
+              className="action-btn btn-ghost"
+              onClick={() => setIsBranchModalOpen(true)}
+            >
+              <GitBranch size={14} color="#a855f7" />
+              Branch
+            </button>
+            <button
+              className="action-btn btn-ghost"
+              onClick={() => setIsMergeModalOpen(true)}
+            >
+              <GitMerge size={14} color="#10b981" />
+              Merge
+            </button>
+            <button
+              className="action-btn btn-ghost"
+              style={{ border: '1px solid rgba(168, 85, 247, 0.3)' }}
+              onClick={() => setIsPrModalOpen(true)}
+              title="Simulate GitHub Pull Request & Branch Protection"
+            >
+              <GitPullRequest size={14} color="#c084fc" />
+              PR
+            </button>
+            <button
+              className="action-btn btn-ghost"
+              style={{ border: '1px solid rgba(245, 158, 11, 0.3)' }}
+              onClick={() => setIsConflictModalOpen(true)}
+              title="Simulate Interactive Git Merge Conflict"
+            >
+              <AlertTriangle size={14} color="#f59e0b" />
+              Conflict
+            </button>
+            <button
+              className="action-btn btn-primary"
+              onClick={handleRunPipeline}
+              disabled={isPipelineRunning}
+            >
+              <Play size={14} />
+              Run CI/CD
+            </button>
+          </div>
+        )}
       </header>
 
-      {/* Main 3-Column Dashboard */}
-      <main className="dashboard-grid">
-        {/* Panel 1: Interactive Git Graph Canvas */}
-        <section className="card-panel">
-          <div className="panel-header">
-            <div className="panel-title">
-              <GitBranch size={16} color="#38bdf8" />
-              Git Branching Visualizer
+      {/* Main View Switcher: Home vs Lab */}
+      {currentView === 'home' ? (
+        <HomePage
+          onLaunchLab={() => setCurrentView('lab')}
+          onOpenTour={() => setIsTutorialOpen(true)}
+        />
+      ) : (
+        /* Panel 1: Interactive Git Graph Canvas */
+        <main className="dashboard-grid">
+          <section className="card-panel">
+            <div className="panel-header">
+              <div className="panel-title">
+                <GitBranch size={16} color="#38bdf8" />
+                Git Branching Visualizer
+              </div>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                {gitState.commits.length} commits • active: <strong style={{ color: '#38bdf8' }}>{gitState.activeBranch}</strong>
+              </span>
             </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              {gitState.commits.length} commits • active: <strong style={{ color: '#38bdf8' }}>{gitState.activeBranch}</strong>
-            </span>
-          </div>
 
-          <div className="panel-body">
-            <GitCanvas
-              state={gitState}
-              selectedCommitId={selectedCommit?.id || null}
-              onSelectCommit={(commit) => setSelectedCommit(commit)}
-            />
+            <div className="panel-body">
+              <GitCanvas
+                state={gitState}
+                selectedCommitId={selectedCommit?.id || null}
+                onSelectCommit={(commit) => setSelectedCommit(commit)}
+              />
 
-            {/* Commit Details Inspector if clicked */}
-            {selectedCommit && (
-              <div
-                style={{
-                  marginTop: '12px',
-                  background: 'var(--bg-surface-elevated)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '10px 14px',
-                  fontSize: '12px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div>
-                  <span style={{ color: 'var(--text-muted)' }}>Selected Commit: </span>
-                  <strong style={{ color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
-                    {selectedCommit.hash}
-                  </strong>
-                  <div style={{ color: 'var(--text-primary)', marginTop: '2px' }}>
-                    {selectedCommit.message}
+              {/* Commit Details Inspector if clicked */}
+              {selectedCommit && (
+                <div
+                  style={{
+                    marginTop: '12px',
+                    background: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '10px 14px',
+                    fontSize: '12px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div>
+                    <span style={{ color: 'var(--text-muted)' }}>Selected Commit: </span>
+                    <strong style={{ color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
+                      {selectedCommit.hash}
+                    </strong>
+                    <div style={{ color: 'var(--text-primary)', marginTop: '2px' }}>
+                      {selectedCommit.message}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '11px' }}>
+                    branch: <strong style={{ color: '#a855f7' }}>{selectedCommit.branch}</strong>
+                    <div>{selectedCommit.author}</div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '11px' }}>
-                  branch: <strong style={{ color: '#a855f7' }}>{selectedCommit.branch}</strong>
-                  <div>{selectedCommit.author}</div>
-                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Panel 2: Live CI/CD Pipeline Simulator */}
+          <section className="card-panel">
+            <div className="panel-header">
+              <div className="panel-title">
+                <Play size={16} color="#10b981" />
+                CI/CD Pipeline Simulator (Vitest & Vercel)
               </div>
-            )}
-          </div>
-        </section>
-
-        {/* Panel 2: Live CI/CD Pipeline Simulator */}
-        <section className="card-panel">
-          <div className="panel-header">
-            <div className="panel-title">
-              <Play size={16} color="#10b981" />
-              CI/CD Pipeline Simulator (Vitest & Vercel)
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                Vite + Vitest + GitHub Actions
+              </span>
             </div>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              Vite + Vitest + GitHub Actions
-            </span>
-          </div>
 
-          <div className="panel-body">
-            <PipelineViewer
-              run={pipelineRun}
-              selectedStageId={selectedStageId}
-              chaosConfig={chaosConfig}
-              isRunning={isPipelineRunning}
-              onRunPipeline={handleRunPipeline}
-              onSelectStage={(stage) => setSelectedStageId(stage.id)}
-              onToggleChaos={handleToggleChaos}
-            />
-          </div>
-        </section>
-
-        {/* Panel 3: Terminal & Challenge Console */}
-        <section className="card-panel console-panel">
-          <div className="panel-header">
-            <div className="panel-title">
-              <Terminal size={16} color="#a855f7" />
-              DevOps Lab & Terminal
+            <div className="panel-body">
+              <PipelineViewer
+                run={pipelineRun}
+                selectedStageId={selectedStageId}
+                chaosConfig={chaosConfig}
+                isRunning={isPipelineRunning}
+                onRunPipeline={handleRunPipeline}
+                onSelectStage={(stage) => setSelectedStageId(stage.id)}
+                onToggleChaos={handleToggleChaos}
+              />
             </div>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              Interactive Shell
-            </span>
-          </div>
+          </section>
 
-          <div className="panel-body">
-            <TerminalConsole
-              logs={logs}
-              currentScenario={currentScenario}
-              onCommand={handleTerminalCommand}
-              onNextScenario={handleNextScenario}
-            />
-          </div>
-        </section>
-      </main>
+          {/* Panel 3: Terminal & Challenge Console */}
+          <section className="card-panel console-panel">
+            <div className="panel-header">
+              <div className="panel-title">
+                <Terminal size={16} color="#a855f7" />
+                DevOps Lab & Terminal
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                Interactive Shell
+              </span>
+            </div>
+
+            <div className="panel-body">
+              <TerminalConsole
+                logs={logs}
+                currentScenario={currentScenario}
+                onCommand={handleTerminalCommand}
+                onNextScenario={handleNextScenario}
+              />
+            </div>
+          </section>
+        </main>
+      )}
 
       {/* Action Modals */}
       <CommitModal
@@ -728,6 +818,17 @@ export const App: React.FC = () => {
       <TutorialModal
         isOpen={isTutorialOpen}
         onClose={() => setIsTutorialOpen(false)}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        settings={settings}
+        gitState={gitState}
+        trophyState={trophyState}
+        onClose={() => setIsSettingsOpen(false)}
+        onUpdateSettings={handleUpdateSettings}
+        onResetTrophies={handleResetTrophies}
+        onResetTour={handleResetTour}
       />
 
       {/* Vercel Monitoring */}
