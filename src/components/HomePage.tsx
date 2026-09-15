@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import {
   Sparkles,
   ArrowRight,
@@ -28,15 +28,6 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) => {
-  const [pulseOffset, setPulseOffset] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPulseOffset((prev) => (prev + 1) % 100)
-    }, 40)
-    return () => clearInterval(interval)
-  }, [])
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
       {/* Hero Section */}
@@ -187,86 +178,200 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
           </div>
 
           {/* Living SVG Canvas */}
-          <div style={{ width: '100%', height: '240px', position: 'relative' }}>
-            <svg viewBox="0 0 900 240" style={{ width: '100%', height: '100%' }}>
+          <div style={{ width: '100%', height: '245px', position: 'relative' }}>
+            <svg viewBox="0 0 900 245" style={{ width: '100%', height: '100%' }}>
               <defs>
-                <linearGradient id="mainRail" x1="0" y1="0" x2="1" y2="0">
+                {/* Fixed Linear Gradients with userSpaceOnUse for robust cross-browser rendering */}
+                <linearGradient id="mainRail" gradientUnits="userSpaceOnUse" x1="50" y1="55" x2="840" y2="55">
                   <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="60%" stopColor="#34d399" />
                   <stop offset="100%" stopColor="#38bdf8" />
                 </linearGradient>
-                <linearGradient id="featureRail" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#38bdf8" />
-                  <stop offset="100%" stopColor="#a855f7" />
+
+                <linearGradient id="developRail" gradientUnits="userSpaceOnUse" x1="160" y1="125" x2="710" y2="125">
+                  <stop offset="0%" stopColor="#06b6d4" />
+                  <stop offset="100%" stopColor="#38bdf8" />
                 </linearGradient>
-                <linearGradient id="hotfixRail" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#f59e0b" />
+
+                <linearGradient id="featureRail" gradientUnits="userSpaceOnUse" x1="340" y1="125" x2="610" y2="195">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="50%" stopColor="#a855f7" />
+                  <stop offset="100%" stopColor="#06b6d4" />
+                </linearGradient>
+
+                <linearGradient id="prRail" gradientUnits="userSpaceOnUse" x1="710" y1="125" x2="810" y2="55">
+                  <stop offset="0%" stopColor="#06b6d4" />
+                  <stop offset="50%" stopColor="#f59e0b" />
                   <stop offset="100%" stopColor="#10b981" />
                 </linearGradient>
-                <filter id="pulseGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="4" result="glow" />
+
+                <filter id="pulseGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="5" result="glow" />
                   <feComposite in="SourceGraphic" in2="glow" operator="over" />
                 </filter>
+
+                {/* Motion Path 1: Feature Flow (main -> develop -> feature/auth -> develop merge -> release PR -> deploy) */}
+                <path
+                  id="featureFlowPath"
+                  d="M 160 55 C 190 55, 200 125, 230 125 L 340 125 C 375 125, 385 195, 420 195 L 530 195 C 570 195, 585 125, 610 125 L 710 125 C 745 125, 765 55, 810 55"
+                  fill="none"
+                />
+
+                {/* Motion Path 2: Continuous Trunk Flow on main */}
+                <path
+                  id="mainDirectPath"
+                  d="M 50 55 L 810 55"
+                  fill="none"
+                />
               </defs>
 
-              {/* main branch rail */}
-              <line x1="60" y1="60" x2="840" y2="60" stroke="url(#mainRail)" strokeWidth="4" opacity="0.8" />
-              <text x="70" y="44" fill="#10b981" fontSize="11" fontFamily="var(--font-mono)" fontWeight="700">
+              {/* 1. MAIN BRANCH RAIL */}
+              <line x1="50" y1="55" x2="840" y2="55" stroke="url(#mainRail)" strokeWidth="4" strokeLinecap="round" opacity="0.9" />
+              {/* Main Fiber Stream Pulse */}
+              <line x1="50" y1="55" x2="840" y2="55" stroke="#34d399" strokeWidth="2" strokeDasharray="8 12" opacity="0.6">
+                <animate attributeName="stroke-dashoffset" from="0" to="-40" dur="2s" repeatCount="indefinite" />
+              </line>
+
+              {/* Main Branch Pill Badge */}
+              <rect x="65" y="15" width="186" height="22" rx="5" fill="#06090e" stroke="rgba(16, 185, 129, 0.45)" strokeWidth="1" />
+              <circle cx="77" cy="26" r="3.5" fill="#10b981" />
+              <text x="88" y="30" fill="#10b981" fontSize="10.5" fontFamily="var(--font-mono)" fontWeight="700">
                 main (v1.0.0 → branchlab.me)
               </text>
 
-              {/* develop branch rail */}
-              <line x1="160" y1="130" x2="840" y2="130" stroke="#06b6d4" strokeWidth="3" opacity="0.7" strokeDasharray="6 4" />
-              <text x="170" y="118" fill="#06b6d4" fontSize="11" fontFamily="var(--font-mono)">
-                develop (staging integration)
+              {/* 2. DEVELOP BRANCH RAIL & CONNECTION */}
+              {/* Branch curve from main to develop */}
+              <path
+                d="M 160 55 C 190 55, 200 125, 230 125"
+                fill="none"
+                stroke="url(#developRail)"
+                strokeWidth="3"
+                strokeDasharray="5 3"
+              />
+              {/* Develop horizontal line */}
+              <line x1="230" y1="125" x2="710" y2="125" stroke="url(#developRail)" strokeWidth="3" strokeDasharray="5 3" opacity="0.85" />
+              {/* Develop Fiber Stream */}
+              <line x1="230" y1="125" x2="710" y2="125" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="6 8" opacity="0.7">
+                <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="2.5s" repeatCount="indefinite" />
+              </line>
+
+              {/* Develop Branch Pill Badge */}
+              <rect x="210" y="86" width="140" height="20" rx="4" fill="#06090e" stroke="rgba(6, 182, 212, 0.4)" strokeWidth="1" />
+              <circle cx="221" cy="96" r="3" fill="#06b6d4" />
+              <text x="230" y="100" fill="#38bdf8" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+                develop (staging)
               </text>
 
-              {/* feature/auth branch curve */}
+              {/* 3. FEATURE/AUTH BRANCH RAIL & CURVES */}
+              {/* Curve down from develop to feature */}
               <path
-                d="M 280 130 C 350 130, 360 200, 440 200 C 520 200, 540 130, 620 130"
+                d="M 340 125 C 375 125, 385 195, 420 195"
                 fill="none"
                 stroke="url(#featureRail)"
-                strokeWidth="4"
-                strokeDasharray="4 2"
+                strokeWidth="3.5"
               />
-              <text x="440" y="222" fill="#a855f7" fontSize="11" fontFamily="var(--font-mono)" textAnchor="middle">
-                feature/auth (student SSO)
-              </text>
-
-              {/* hotfix branch curve */}
+              {/* Feature horizontal track */}
+              <line x1="420" y1="195" x2="530" y2="195" stroke="url(#featureRail)" strokeWidth="3.5" />
+              {/* Curve back up into develop merge node */}
               <path
-                d="M 620 60 C 660 60, 680 100, 720 100 C 760 100, 780 60, 820 60"
+                d="M 530 195 C 570 195, 585 125, 610 125"
                 fill="none"
-                stroke="url(#hotfixRail)"
+                stroke="url(#featureRail)"
                 strokeWidth="3.5"
               />
 
-              {/* Static Commits */}
+              {/* Feature Branch Pill Badge (Placed cleanly above the feature rail to prevent text collision) */}
+              <rect x="385" y="156" width="175" height="20" rx="4" fill="#06090e" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1" />
+              <circle cx="396" cy="166" r="3" fill="#a855f7" />
+              <text x="405" y="170" fill="#c084fc" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+                feature/auth (student SSO)
+              </text>
+
+              {/* 4. RELEASE PULL REQUEST PROMOTION CURVE */}
+              <path
+                d="M 710 125 C 745 125, 765 55, 810 55"
+                fill="none"
+                stroke="url(#prRail)"
+                strokeWidth="3.5"
+              />
+              <path
+                d="M 710 125 C 745 125, 765 55, 810 55"
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="2"
+                strokeDasharray="4 4"
+              >
+                <animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.8s" repeatCount="indefinite" />
+              </path>
+
+              {/* PR Release Badge */}
+              <rect x="715" y="70" width="88" height="18" rx="4" fill="#06090e" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="1" />
+              <text x="722" y="83" fill="#f59e0b" fontSize="9" fontFamily="var(--font-mono)" fontWeight="600">
+                PR #42 (Release)
+              </text>
+
+              {/* 5. STATIC COMMITS (Each in its own vertical lane without overlap) */}
               {[
-                { cx: 120, cy: 60, color: '#10b981', sha: '1a2b3c' },
-                { cx: 240, cy: 130, color: '#06b6d4', sha: '4d5e6f' },
-                { cx: 360, cy: 200, color: '#a855f7', sha: '7g8h9i' },
-                { cx: 500, cy: 200, color: '#a855f7', sha: '0j1k2l' },
-                { cx: 620, cy: 130, color: '#06b6d4', sha: '3m4n5o', isMerge: true },
-                { cx: 720, cy: 100, color: '#f59e0b', sha: 'patch9' },
-                { cx: 820, cy: 60, color: '#10b981', sha: 'deploy', isMerge: true },
+                { cx: 90, cy: 55, color: '#10b981', sha: 'v0.9.0' },
+                { cx: 270, cy: 125, color: '#06b6d4', sha: '4d5e6f' },
+                { cx: 460, cy: 195, color: '#a855f7', sha: '7g8h9i' },
+                { cx: 530, cy: 195, color: '#a855f7', sha: '0j1k2l' },
+                { cx: 610, cy: 125, color: '#06b6d4', sha: '3m4n5o', isMerge: true },
+                { cx: 810, cy: 55, color: '#10b981', sha: 'deploy', isMerge: true },
               ].map((node, idx) => (
                 <g key={`hero-node-${idx}`}>
-                  <circle cx={node.cx} cy={node.cy} r="10" fill="#06090e" stroke={node.color} strokeWidth="3" />
+                  {/* Outer ring */}
+                  <circle cx={node.cx} cy={node.cy} r={node.isMerge ? '11' : '9'} fill="#06090e" stroke={node.color} strokeWidth="3" />
+                  {/* Inner center */}
                   <circle cx={node.cx} cy={node.cy} r="3.5" fill={node.color} />
-                  <text x={node.cx} y={node.cy + 22} fill="var(--text-muted)" fontSize="10" fontFamily="var(--font-mono)" textAnchor="middle">
+                  {/* SHA label placed cleanly below */}
+                  <text
+                    x={node.cx}
+                    y={node.cy + 20}
+                    fill="var(--text-muted)"
+                    fontSize="10"
+                    fontFamily="var(--font-mono)"
+                    textAnchor="middle"
+                  >
                     {node.sha}
                   </text>
                 </g>
               ))}
 
-              {/* Animated Traveling Pulse Packet */}
-              <circle
-                cx={60 + (pulseOffset / 100) * 780}
-                cy="60"
-                r="7"
-                fill="#ffffff"
-                filter="url(#pulseGlow)"
-              />
+              {/* Deploy Radar Beacon Ping (Pulses outward from the deploy node) */}
+              <circle cx="810" cy="55" r="14" fill="none" stroke="#10b981" strokeWidth="2" opacity="0.8">
+                <animate attributeName="r" values="11;24" dur="2.2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.85;0" dur="2.2s" repeatCount="indefinite" />
+              </circle>
+
+              {/* 6. TRAVELING PULSE ORBS ALONG THE REAL CURVES */}
+              {/* Orb 1: Flows along Feature Flow (main -> develop -> feature -> merge -> deploy) */}
+              <g>
+                <circle r="7" fill="#ffffff" filter="url(#pulseGlow)">
+                  <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                    <mpath href="#featureFlowPath" />
+                  </animateMotion>
+                </circle>
+                <circle r="4" fill="#38bdf8">
+                  <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                    <mpath href="#featureFlowPath" />
+                  </animateMotion>
+                </circle>
+              </g>
+
+              {/* Orb 2: Continuous Trunk Stream on main */}
+              <g>
+                <circle r="6" fill="#34d399" opacity="0.95" filter="url(#pulseGlow)">
+                  <animateMotion dur="4.2s" begin="2.1s" repeatCount="indefinite">
+                    <mpath href="#mainDirectPath" />
+                  </animateMotion>
+                </circle>
+                <circle r="3" fill="#ffffff">
+                  <animateMotion dur="4.2s" begin="2.1s" repeatCount="indefinite">
+                    <mpath href="#mainDirectPath" />
+                  </animateMotion>
+                </circle>
+              </g>
             </svg>
           </div>
         </div>
