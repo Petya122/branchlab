@@ -42,4 +42,12 @@ describe('HomePage Component', () => {
     fireEvent.click(tourButton)
     expect(handleTour).toHaveBeenCalledTimes(1)
   })
+
+  it('adjusts SVG animation durations based on animationSpeed prop', () => {
+    const { container } = render(
+      <HomePage onLaunchLab={vi.fn()} onOpenTour={vi.fn()} animationSpeed="fast" />
+    )
+    const animateMotion = container.querySelector('animateMotion')
+    expect(animateMotion).toHaveAttribute('dur', '3.2s')
+  })
 })

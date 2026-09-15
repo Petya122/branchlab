@@ -663,6 +663,7 @@ export const App: React.FC = () => {
       {/* Main View Switcher: Home vs Lab */}
       {currentView === 'home' ? (
         <HomePage
+          animationSpeed={settings.animationSpeed}
           onLaunchLab={() => setCurrentView('lab')}
           onOpenTour={() => setIsTutorialOpen(true)}
         />

@@ -25,9 +25,44 @@ const GithubIcon: React.FC = () => (
 interface HomePageProps {
   onLaunchLab: () => void
   onOpenTour: () => void
+  animationSpeed?: 'fast' | 'normal' | 'relaxed'
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  onLaunchLab,
+  onOpenTour,
+  animationSpeed = 'normal',
+}) => {
+  const speedConfig = {
+    fast: {
+      featureDur: '3.2s',
+      trunkDur: '2.2s',
+      trunkBegin: '1.1s',
+      dashDur: '1.1s',
+      beaconDur: '1.2s',
+    },
+    normal: {
+      featureDur: '6.0s',
+      trunkDur: '4.2s',
+      trunkBegin: '2.1s',
+      dashDur: '2.0s',
+      beaconDur: '2.2s',
+    },
+    relaxed: {
+      featureDur: '10.0s',
+      trunkDur: '7.0s',
+      trunkBegin: '3.5s',
+      dashDur: '3.5s',
+      beaconDur: '3.5s',
+    },
+  }[animationSpeed] || {
+    featureDur: '6.0s',
+    trunkDur: '4.2s',
+    trunkBegin: '2.1s',
+    dashDur: '2.0s',
+    beaconDur: '2.2s',
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
       {/* Hero Section */}
@@ -62,12 +97,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
           <span style={{ color: '#34d399' }}>branchlab.me</span>
         </div>
 
-        {/* Headline */}
+        {/* Hero Title */}
         <h1
           style={{
-            fontSize: 'clamp(32px, 5vw, 54px)',
-            fontWeight: '800',
-            lineHeight: '1.15',
+            fontWeight: 800,
+            lineHeight: 1.15,
             letterSpacing: '-0.03em',
             marginBottom: '18px',
             background: 'linear-gradient(to right, #f8fafc, #cbd5e1, #38bdf8)',
@@ -78,12 +112,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
           Master Git Branching & CI/CD Pipelines in Real-Time
         </h1>
 
-        {/* Subtitle */}
+        {/* Hero Subtitle */}
         <p
           style={{
-            fontSize: 'clamp(15px, 2vw, 18px)',
             color: 'var(--text-secondary)',
-            lineHeight: '1.6',
+            lineHeight: 1.6,
             maxWidth: '720px',
             margin: '0 auto 32px',
           }}
@@ -229,13 +262,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
               <line x1="50" y1="55" x2="840" y2="55" stroke="url(#mainRail)" strokeWidth="4" strokeLinecap="round" opacity="0.9" />
               {/* Main Fiber Stream Pulse */}
               <line x1="50" y1="55" x2="840" y2="55" stroke="#34d399" strokeWidth="2" strokeDasharray="8 12" opacity="0.6">
-                <animate attributeName="stroke-dashoffset" from="0" to="-40" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="stroke-dashoffset" from="0" to="-40" dur={speedConfig.dashDur} repeatCount="indefinite" />
               </line>
 
-              {/* Main Branch Pill Badge */}
-              <rect x="65" y="15" width="186" height="22" rx="5" fill="#06090e" stroke="rgba(16, 185, 129, 0.45)" strokeWidth="1" />
-              <circle cx="77" cy="26" r="3.5" fill="#10b981" />
-              <text x="88" y="30" fill="#10b981" fontSize="10.5" fontFamily="var(--font-mono)" fontWeight="700">
+              {/* Main Branch Glassmorphic Pill Badge */}
+              <rect x="65" y="14" width="186" height="22" rx="11" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.45)" strokeWidth="1" />
+              <circle cx="77" cy="25" r="3.5" fill="#10b981" />
+              <text x="88" y="29" fill="#10b981" fontSize="10.5" fontFamily="var(--font-mono)" fontWeight="700">
                 main (v1.0.0 → branchlab.me)
               </text>
 
@@ -252,13 +285,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
               <line x1="230" y1="125" x2="710" y2="125" stroke="url(#developRail)" strokeWidth="3" strokeDasharray="5 3" opacity="0.85" />
               {/* Develop Fiber Stream */}
               <line x1="230" y1="125" x2="710" y2="125" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="6 8" opacity="0.7">
-                <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="2.5s" repeatCount="indefinite" />
+                <animate attributeName="stroke-dashoffset" from="0" to="-28" dur={speedConfig.dashDur} repeatCount="indefinite" />
               </line>
 
-              {/* Develop Branch Pill Badge */}
-              <rect x="210" y="86" width="140" height="20" rx="4" fill="#06090e" stroke="rgba(6, 182, 212, 0.4)" strokeWidth="1" />
-              <circle cx="221" cy="96" r="3" fill="#06b6d4" />
-              <text x="230" y="100" fill="#38bdf8" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+              {/* Develop Branch Glassmorphic Pill Badge */}
+              <rect x="210" y="85" width="140" height="20" rx="10" fill="rgba(6, 182, 212, 0.12)" stroke="rgba(6, 182, 212, 0.4)" strokeWidth="1" />
+              <circle cx="221" cy="95" r="3" fill="#06b6d4" />
+              <text x="230" y="99" fill="#38bdf8" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
                 develop (staging)
               </text>
 
@@ -280,10 +313,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
                 strokeWidth="3.5"
               />
 
-              {/* Feature Branch Pill Badge (Placed cleanly above the feature rail to prevent text collision) */}
-              <rect x="385" y="156" width="175" height="20" rx="4" fill="#06090e" stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1" />
-              <circle cx="396" cy="166" r="3" fill="#a855f7" />
-              <text x="405" y="170" fill="#c084fc" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+              {/* Feature Branch Glassmorphic Pill Badge */}
+              <rect x="385" y="155" width="175" height="20" rx="10" fill="rgba(168, 85, 247, 0.14)" stroke="rgba(168, 85, 247, 0.45)" strokeWidth="1" />
+              <circle cx="396" cy="165" r="3" fill="#a855f7" />
+              <text x="405" y="169" fill="#c084fc" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
                 feature/auth (student SSO)
               </text>
 
@@ -301,12 +334,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
                 strokeWidth="2"
                 strokeDasharray="4 4"
               >
-                <animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.8s" repeatCount="indefinite" />
+                <animate attributeName="stroke-dashoffset" from="0" to="-32" dur={speedConfig.dashDur} repeatCount="indefinite" />
               </path>
 
-              {/* PR Release Badge */}
-              <rect x="715" y="70" width="88" height="18" rx="4" fill="#06090e" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="1" />
-              <text x="722" y="83" fill="#f59e0b" fontSize="9" fontFamily="var(--font-mono)" fontWeight="600">
+              {/* PR Release Glassmorphic Badge - positioned cleanly above staging track before curve takeoff */}
+              <rect x="660" y="85" width="105" height="20" rx="10" fill="rgba(245, 158, 11, 0.14)" stroke="rgba(245, 158, 11, 0.5)" strokeWidth="1" />
+              <circle cx="672" cy="95" r="3" fill="#f59e0b" />
+              <text x="681" y="99" fill="#f59e0b" fontSize="9.5" fontFamily="var(--font-mono)" fontWeight="600">
                 PR #42 (Release)
               </text>
 
@@ -340,20 +374,20 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
 
               {/* Deploy Radar Beacon Ping (Pulses outward from the deploy node) */}
               <circle cx="810" cy="55" r="14" fill="none" stroke="#10b981" strokeWidth="2" opacity="0.8">
-                <animate attributeName="r" values="11;24" dur="2.2s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.85;0" dur="2.2s" repeatCount="indefinite" />
+                <animate attributeName="r" values="11;24" dur={speedConfig.beaconDur} repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.85;0" dur={speedConfig.beaconDur} repeatCount="indefinite" />
               </circle>
 
               {/* 6. TRAVELING PULSE ORBS ALONG THE REAL CURVES */}
               {/* Orb 1: Flows along Feature Flow (main -> develop -> feature -> merge -> deploy) */}
               <g>
                 <circle r="7" fill="#ffffff" filter="url(#pulseGlow)">
-                  <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                  <animateMotion dur={speedConfig.featureDur} repeatCount="indefinite" rotate="auto">
                     <mpath href="#featureFlowPath" />
                   </animateMotion>
                 </circle>
                 <circle r="4" fill="#38bdf8">
-                  <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                  <animateMotion dur={speedConfig.featureDur} repeatCount="indefinite" rotate="auto">
                     <mpath href="#featureFlowPath" />
                   </animateMotion>
                 </circle>
@@ -362,12 +396,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onLaunchLab, onOpenTour }) =
               {/* Orb 2: Continuous Trunk Stream on main */}
               <g>
                 <circle r="6" fill="#34d399" opacity="0.95" filter="url(#pulseGlow)">
-                  <animateMotion dur="4.2s" begin="2.1s" repeatCount="indefinite">
+                  <animateMotion dur={speedConfig.trunkDur} begin={speedConfig.trunkBegin} repeatCount="indefinite">
                     <mpath href="#mainDirectPath" />
                   </animateMotion>
                 </circle>
                 <circle r="3" fill="#ffffff">
-                  <animateMotion dur="4.2s" begin="2.1s" repeatCount="indefinite">
+                  <animateMotion dur={speedConfig.trunkDur} begin={speedConfig.trunkBegin} repeatCount="indefinite">
                     <mpath href="#mainDirectPath" />
                   </animateMotion>
                 </circle>
