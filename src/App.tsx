@@ -38,6 +38,7 @@ import { BranchModal, CommitModal, MergeModal } from './components/ActionModals'
 import { MergeConflictModal } from './components/MergeConflictModal'
 import { PullRequestModal } from './components/PullRequestModal'
 import { TrophyRoomModal } from './components/TrophyRoomModal'
+import { TutorialModal } from './components/TutorialModal'
 import {
   GitBranch,
   GitCommit,
@@ -49,6 +50,7 @@ import {
   Trophy,
   GitPullRequest,
   AlertTriangle,
+  HelpCircle,
 } from 'lucide-react'
 
 export const App: React.FC = () => {
@@ -61,6 +63,13 @@ export const App: React.FC = () => {
   const [isConflictModalOpen, setIsConflictModalOpen] = useState(false)
   const [isPrModalOpen, setIsPrModalOpen] = useState(false)
   const [isTrophyModalOpen, setIsTrophyModalOpen] = useState(false)
+  const [isTutorialOpen, setIsTutorialOpen] = useState(() => {
+    try {
+      return localStorage.getItem('branchlab_tutorial_seen') !== 'true'
+    } catch {
+      return false
+    }
+  })
 
   const currentLevel = calculateDevOpsLevel(trophyState.xp)
 
@@ -498,6 +507,24 @@ export const App: React.FC = () => {
           </span>
         </button>
 
+        {/* Guided Tutorial Tour Button */}
+        <button
+          className="action-btn btn-ghost"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
+            background: 'rgba(56, 189, 248, 0.08)',
+            color: '#38bdf8',
+          }}
+          onClick={() => setIsTutorialOpen(true)}
+          title="Open Guided Tutorial Tour"
+        >
+          <HelpCircle size={14} />
+          <span style={{ fontSize: '11px', fontWeight: '700' }}>Tour</span>
+        </button>
+
         {/* Quick Actions */}
         <div className="nav-actions">
           <button
@@ -696,6 +723,11 @@ export const App: React.FC = () => {
         isOpen={isTrophyModalOpen}
         trophyState={trophyState}
         onClose={() => setIsTrophyModalOpen(false)}
+      />
+
+      <TutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
       />
 
       {/* Vercel Monitoring */}
