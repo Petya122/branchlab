@@ -265,10 +265,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <animate attributeName="stroke-dashoffset" from="0" to="-40" dur={speedConfig.dashDur} repeatCount="indefinite" />
               </line>
 
-              {/* Main Branch Glassmorphic Pill Badge */}
-              <rect x="60" y="14" width="240" height="22" rx="11" fill="rgba(8, 20, 16, 0.88)" stroke="rgba(16, 185, 129, 0.5)" strokeWidth="1" />
-              <circle cx="73" cy="25" r="3.5" fill="#10b981" />
-              <text x="85" y="29" fill="#10b981" fontSize="10.5" fontFamily="var(--font-mono)" fontWeight="700">
+              {/* Main Branch Label */}
+              <circle cx="73" cy="35" r="3.5" fill="#10b981" />
+              <text x="83" y="39" fill="#10b981" fontSize="11" fontFamily="var(--font-mono)" fontWeight="700">
                 main (v1.0.0 → branchlab.me)
               </text>
 
@@ -288,10 +287,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <animate attributeName="stroke-dashoffset" from="0" to="-28" dur={speedConfig.dashDur} repeatCount="indefinite" />
               </line>
 
-              {/* Develop Branch Glassmorphic Pill Badge */}
-              <rect x="205" y="85" width="154" height="20" rx="10" fill="rgba(8, 18, 26, 0.88)" stroke="rgba(6, 182, 212, 0.45)" strokeWidth="1" />
-              <circle cx="218" cy="95" r="3" fill="#06b6d4" />
-              <text x="228" y="99" fill="#38bdf8" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+              {/* Develop Branch Label */}
+              <circle cx="218" cy="105" r="3" fill="#06b6d4" />
+              <text x="228" y="109" fill="#38bdf8" fontSize="10.5" fontFamily="var(--font-mono)" fontWeight="600">
                 develop (staging)
               </text>
 
@@ -313,10 +311,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                 strokeWidth="3.5"
               />
 
-              {/* Feature Branch Glassmorphic Pill Badge */}
-              <rect x="375" y="155" width="210" height="20" rx="10" fill="rgba(20, 10, 30, 0.88)" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1" />
-              <circle cx="388" cy="165" r="3" fill="#a855f7" />
-              <text x="398" y="169" fill="#c084fc" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+              {/* Feature Branch Label */}
+              <circle cx="388" cy="175" r="3" fill="#a855f7" />
+              <text x="398" y="179" fill="#c084fc" fontSize="10.5" fontFamily="var(--font-mono)" fontWeight="600">
                 feature/auth (student SSO)
               </text>
 
@@ -336,13 +333,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               >
                 <animate attributeName="stroke-dashoffset" from="0" to="-32" dur={speedConfig.dashDur} repeatCount="indefinite" />
               </path>
-
-              {/* PR Release Glassmorphic Badge - located in top row at x=665, y=14, completely clear of the curve */}
-              <rect x="665" y="14" width="142" height="22" rx="11" fill="rgba(26, 16, 8, 0.88)" stroke="rgba(245, 158, 11, 0.55)" strokeWidth="1" />
-              <circle cx="678" cy="25" r="3.5" fill="#f59e0b" />
-              <text x="689" y="29" fill="#f59e0b" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
-                PR #42 (Release)
-              </text>
 
               {/* 5. STATIC COMMITS (Each in its own vertical lane without overlap) */}
               {[
@@ -369,6 +359,20 @@ export const HomePage: React.FC<HomePageProps> = ({
                   >
                     {node.sha}
                   </text>
+                  {/* PR Release tag positioned directly under Deploy node */}
+                  {node.sha === 'deploy' && (
+                    <text
+                      x={node.cx}
+                      y={node.cy + 34}
+                      fill="#f59e0b"
+                      fontSize="9.5"
+                      fontFamily="var(--font-mono)"
+                      fontWeight="600"
+                      textAnchor="middle"
+                    >
+                      PR #42 (Release)
+                    </text>
+                  )}
                 </g>
               ))}
 

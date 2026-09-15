@@ -8,6 +8,7 @@ import {
   Download,
   Check,
   GitBranch,
+  Trash2,
 } from 'lucide-react'
 import type { SettingsState } from '../utils/settings'
 import type { GitGraphState } from '../types/git'
@@ -58,6 +59,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     document.body.appendChild(downloadAnchor)
     downloadAnchor.click()
     downloadAnchor.remove()
+  }
+
+  const handleClearCache = () => {
+    if (
+      confirm(
+        'Are you sure you want to clear all browser cache and reset BranchLab to factory defaults? All settings, trophies, and tour history will be reset.'
+      )
+    ) {
+      try {
+        localStorage.clear()
+        window.location.reload()
+      } catch {
+        // fallback
+      }
+    }
   }
 
   return (
@@ -200,6 +216,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }}
             >
               Reset Trophies & XP
+            </button>
+            <button
+              type="button"
+              className="action-btn btn-ghost"
+              style={{ fontSize: '11px', padding: '6px 12px', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.35)' }}
+              onClick={handleClearCache}
+            >
+              <Trash2 size={13} color="#ef4444" /> Clear Cache & Reset
             </button>
           </div>
         </div>

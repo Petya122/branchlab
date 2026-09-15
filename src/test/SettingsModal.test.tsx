@@ -69,4 +69,21 @@ describe('SettingsModal Component', () => {
     fireEvent.click(closeButton)
     expect(handleClose).toHaveBeenCalledTimes(1)
   })
+
+  it('renders the Clear Cache & Reset button', () => {
+    render(
+      <SettingsModal
+        isOpen={true}
+        settings={DEFAULT_SETTINGS}
+        gitState={dummyGitState}
+        trophyState={dummyTrophyState}
+        onClose={vi.fn()}
+        onUpdateSettings={vi.fn()}
+        onResetTrophies={vi.fn()}
+        onResetTour={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: /clear cache & reset/i })).toBeInTheDocument()
+  })
 })
