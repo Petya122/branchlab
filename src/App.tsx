@@ -25,10 +25,19 @@ import {
 } from './utils/pipelineEngine'
 import { SCENARIOS } from './utils/scenarios'
 import type { Scenario } from './utils/scenarios'
+import {
+  awardTrophy,
+  calculateDevOpsLevel,
+  loadTrophyState,
+  type TrophyState,
+} from './utils/trophies'
 import { GitCanvas } from './components/GitCanvas'
 import { PipelineViewer } from './components/PipelineViewer'
 import { TerminalConsole } from './components/TerminalConsole'
 import { BranchModal, CommitModal, MergeModal } from './components/ActionModals'
+import { MergeConflictModal } from './components/MergeConflictModal'
+import { PullRequestModal } from './components/PullRequestModal'
+import { TrophyRoomModal } from './components/TrophyRoomModal'
 import {
   GitBranch,
   GitCommit,
@@ -37,12 +46,42 @@ import {
   Terminal,
   Globe,
   Layers,
+  Trophy,
+  GitPullRequest,
+  AlertTriangle,
 } from 'lucide-react'
 
 export const App: React.FC = () => {
   const [model, setModel] = useState<BranchingModel>('gitflow')
   const [gitState, setGitState] = useState<GitGraphState>(() => getInitialGitState('gitflow'))
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null)
+
+  // Gamification & Trophies (Persisted in browser localStorage)
+  const [trophyState, setTrophyState] = useState<TrophyState>(() => loadTrophyState())
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false)
+  const [isPrModalOpen, setIsPrModalOpen] = useState(false)
+  const [isTrophyModalOpen, setIsTrophyModalOpen] = useState(false)
+
+  const currentLevel = calculateDevOpsLevel(trophyState.xp)
+
+  const triggerTrophy = (trophyId: string) => {
+    setTrophyState((prev) => {
+      const { nextState, newlyUnlocked } = awardTrophy(trophyId, prev)
+      if (newlyUnlocked) {
+        setLogs((logsPrev) => [
+          ...logsPrev,
+          `\n🏆 [ACHIEVEMENT UNLOCKED] ${newlyUnlocked.title} (+${newlyUnlocked.xp} XP)!`,
+          `"${newlyUnlocked.description}"`,
+        ])
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+        })
+      }
+      return nextState
+    })
+  }
 
   // Pipeline State
   const [pipelineRun, setPipelineRun] = useState<PipelineRun>(() =>
@@ -91,6 +130,10 @@ export const App: React.FC = () => {
       `$ switched branching strategy to ${newModel.toUpperCase()}`,
       `Active branch: ${nextState.activeBranch}`,
     ])
+
+    if (newModel === 'trunk-based') {
+      triggerTrophy('trunk-pioneer')
+    }
   }
 
   // Run CI/CD Pipeline Simulator
@@ -159,6 +202,9 @@ export const App: React.FC = () => {
         `[CI/CD RESULT] All checks passed! Production release live on https://branchlab.me ✨`,
       ])
 
+      // Award Quality Gatekeeper trophy
+      triggerTrophy('quality-gatekeeper')
+
       // Celebration confetti for successful release
       confetti({
         particleCount: 60,
@@ -226,9 +272,54 @@ export const App: React.FC = () => {
           mergeCommit.branch
         )
       )
+
+      if (source.startsWith('hotfix/') && target === 'main') {
+        triggerTrophy('hotfix-firefighter')
+      }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err)
       setLogs((prev) => [...prev, `[ERROR] ${errMsg}`])
+    }
+  }
+
+  // Resolve Merge Conflict
+  const handleResolveConflict = (strategy: 'current' | 'incoming' | 'both') => {
+    const source = gitState.activeBranch
+    const target = source.startsWith('feature/') ? 'develop' : 'main'
+    try {
+      const { nextState, mergeCommit } = mergeBranches(gitState, source, target)
+      setGitState(nextState)
+      setSelectedCommit(mergeCommit)
+      setLogs((prev) => [
+        ...prev,
+        `$ git merge ${source} (Conflict Resolved via strategy: ${strategy})`,
+        `Resolved conflict in src/config/api.ts. Created merge commit ${mergeCommit.hash}`,
+      ])
+      triggerTrophy('conflict-master')
+    } catch {
+      setLogs((prev) => [...prev, `[CONFLICT] Conflict resolved and committed in ${target}.`])
+      triggerTrophy('conflict-master')
+    }
+  }
+
+  // Merge Pull Request
+  const handleMergePR = (title: string) => {
+    const source = gitState.activeBranch
+    const target = 'main'
+    try {
+      const { nextState, mergeCommit } = mergeBranches(gitState, source, target)
+      mergeCommit.message = `${title} (#24)`
+      setGitState(nextState)
+      setSelectedCommit(mergeCommit)
+      setLogs((prev) => [
+        ...prev,
+        `$ gh pr merge #24 --squash`,
+        `Pull Request #24 merged into main [${mergeCommit.hash}]: ${title}`,
+      ])
+      triggerTrophy('pr-champion')
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err)
+      setLogs((prev) => [...prev, `[PR ERROR] ${errMsg}`])
     }
   }
 
@@ -388,6 +479,25 @@ export const App: React.FC = () => {
           </button>
         </div>
 
+        {/* DevOps Rank & Trophy Widget */}
+        <button
+          className="action-btn btn-ghost"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            background: 'rgba(245, 158, 11, 0.08)',
+          }}
+          onClick={() => setIsTrophyModalOpen(true)}
+          title="Open DevOps Trophy Room"
+        >
+          <Trophy size={14} color="#f59e0b" />
+          <span style={{ fontSize: '11px', fontWeight: '700', color: '#f59e0b' }}>
+            Lvl {currentLevel.level} • {trophyState.xp} XP
+          </span>
+        </button>
+
         {/* Quick Actions */}
         <div className="nav-actions">
           <button
@@ -410,6 +520,24 @@ export const App: React.FC = () => {
           >
             <GitMerge size={14} color="#10b981" />
             Merge
+          </button>
+          <button
+            className="action-btn btn-ghost"
+            style={{ border: '1px solid rgba(168, 85, 247, 0.3)' }}
+            onClick={() => setIsPrModalOpen(true)}
+            title="Simulate GitHub Pull Request & Branch Protection"
+          >
+            <GitPullRequest size={14} color="#c084fc" />
+            Pull Request
+          </button>
+          <button
+            className="action-btn btn-ghost"
+            style={{ border: '1px solid rgba(245, 158, 11, 0.3)' }}
+            onClick={() => setIsConflictModalOpen(true)}
+            title="Simulate Interactive Git Merge Conflict"
+          >
+            <AlertTriangle size={14} color="#f59e0b" />
+            Conflict
           </button>
           <button
             className="action-btn btn-primary"
@@ -544,6 +672,30 @@ export const App: React.FC = () => {
         onClose={() => setIsMergeModalOpen(false)}
         state={gitState}
         onMerge={handleMerge}
+      />
+
+      {/* Advanced Interactive DevOps Modals */}
+      <MergeConflictModal
+        isOpen={isConflictModalOpen}
+        sourceBranch={gitState.activeBranch}
+        targetBranch={gitState.activeBranch.startsWith('feature/') ? 'develop' : 'main'}
+        onClose={() => setIsConflictModalOpen(false)}
+        onResolve={handleResolveConflict}
+      />
+
+      <PullRequestModal
+        isOpen={isPrModalOpen}
+        sourceBranch={gitState.activeBranch}
+        targetBranch="main"
+        ciStatus={pipelineRun.status}
+        onClose={() => setIsPrModalOpen(false)}
+        onMergePR={handleMergePR}
+      />
+
+      <TrophyRoomModal
+        isOpen={isTrophyModalOpen}
+        trophyState={trophyState}
+        onClose={() => setIsTrophyModalOpen(false)}
       />
 
       {/* Vercel Monitoring */}
