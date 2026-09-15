@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import confetti from 'canvas-confetti'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import type {
   BranchingModel,
   Commit,
@@ -543,6 +545,10 @@ export const App: React.FC = () => {
         state={gitState}
         onMerge={handleMerge}
       />
+
+      {/* Vercel Monitoring */}
+      <Analytics />
+      <SpeedInsights />
     </div>
   )
 }
