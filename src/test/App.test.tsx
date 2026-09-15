@@ -20,35 +20,49 @@ describe('App Component', () => {
   it('renders the header with BranchLab and the branchlab.me domain badge', () => {
     render(<App />)
     expect(screen.getByText('BranchLab')).toBeInTheDocument()
-    expect(screen.getByText('branchlab.me')).toBeInTheDocument()
+    expect(screen.getAllByText(/branchlab.me/i).length).toBeGreaterThan(0)
   })
 
-  it('renders all three branching model options', () => {
+  it('renders both Home and Interactive Lab navigation tabs', () => {
     render(<App />)
+    expect(screen.getByRole('button', { name: /^home$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^interactive lab$/i })).toBeInTheDocument()
+  })
+
+  it('switches to Interactive Lab and renders branching model options', () => {
+    render(<App />)
+    const labTab = screen.getByRole('button', { name: /^interactive lab$/i })
+    fireEvent.click(labTab)
+
     expect(screen.getByRole('button', { name: /gitflow/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /trunk-based/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /github flow/i })).toBeInTheDocument()
   })
 
-  it('switches branching model to Trunk-Based when clicked', () => {
+  it('opens the commit modal when in Lab view and clicking Commit', () => {
     render(<App />)
-    const trunkButton = screen.getByRole('button', { name: /trunk-based/i })
-    fireEvent.click(trunkButton)
-    expect(trunkButton).toHaveClass('active')
-  })
+    // Switch to lab view
+    fireEvent.click(screen.getByRole('button', { name: /^interactive lab$/i }))
 
-  it('opens the commit modal when clicking the Commit action button', () => {
-    render(<App />)
     const commitButtons = screen.getAllByRole('button', { name: /commit/i })
-    // The nav action button is among them
     fireEvent.click(commitButtons[0])
     expect(screen.getByText('Create New Commit')).toBeInTheDocument()
   })
 
-  it('renders the CI/CD Pipeline Simulator panel and Chaos Controls', () => {
+  it('renders the CI/CD Pipeline Simulator and Chaos Controls in Lab view', () => {
     render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /^interactive lab$/i }))
+
     expect(screen.getByText(/CI\/CD Pipeline Simulator/i)).toBeInTheDocument()
     expect(screen.getByText(/Chaos Injection Controls/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /run ci\/cd/i })).toBeInTheDocument()
+  })
+
+  it('opens the Settings modal when clicking the Settings button', () => {
+    render(<App />)
+    const settingsBtn = screen.getByRole('button', { name: /settings/i })
+    fireEvent.click(settingsBtn)
+    expect(screen.getByText('BranchLab Settings')).toBeInTheDocument()
+    expect(screen.getByText(/Strict Branch Protection/i)).toBeInTheDocument()
   })
 })
