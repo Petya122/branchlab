@@ -266,9 +266,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               </line>
 
               {/* Main Branch Glassmorphic Pill Badge */}
-              <rect x="65" y="14" width="186" height="22" rx="11" fill="rgba(16, 185, 129, 0.12)" stroke="rgba(16, 185, 129, 0.45)" strokeWidth="1" />
-              <circle cx="77" cy="25" r="3.5" fill="#10b981" />
-              <text x="88" y="29" fill="#10b981" fontSize="10.5" fontFamily="var(--font-mono)" fontWeight="700">
+              <rect x="60" y="14" width="240" height="22" rx="11" fill="rgba(8, 20, 16, 0.88)" stroke="rgba(16, 185, 129, 0.5)" strokeWidth="1" />
+              <circle cx="73" cy="25" r="3.5" fill="#10b981" />
+              <text x="85" y="29" fill="#10b981" fontSize="10.5" fontFamily="var(--font-mono)" fontWeight="700">
                 main (v1.0.0 → branchlab.me)
               </text>
 
@@ -289,9 +289,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               </line>
 
               {/* Develop Branch Glassmorphic Pill Badge */}
-              <rect x="210" y="85" width="140" height="20" rx="10" fill="rgba(6, 182, 212, 0.12)" stroke="rgba(6, 182, 212, 0.4)" strokeWidth="1" />
-              <circle cx="221" cy="95" r="3" fill="#06b6d4" />
-              <text x="230" y="99" fill="#38bdf8" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+              <rect x="205" y="85" width="154" height="20" rx="10" fill="rgba(8, 18, 26, 0.88)" stroke="rgba(6, 182, 212, 0.45)" strokeWidth="1" />
+              <circle cx="218" cy="95" r="3" fill="#06b6d4" />
+              <text x="228" y="99" fill="#38bdf8" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
                 develop (staging)
               </text>
 
@@ -314,9 +314,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               />
 
               {/* Feature Branch Glassmorphic Pill Badge */}
-              <rect x="385" y="155" width="175" height="20" rx="10" fill="rgba(168, 85, 247, 0.14)" stroke="rgba(168, 85, 247, 0.45)" strokeWidth="1" />
-              <circle cx="396" cy="165" r="3" fill="#a855f7" />
-              <text x="405" y="169" fill="#c084fc" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
+              <rect x="375" y="155" width="210" height="20" rx="10" fill="rgba(20, 10, 30, 0.88)" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1" />
+              <circle cx="388" cy="165" r="3" fill="#a855f7" />
+              <text x="398" y="169" fill="#c084fc" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
                 feature/auth (student SSO)
               </text>
 
@@ -337,10 +337,10 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <animate attributeName="stroke-dashoffset" from="0" to="-32" dur={speedConfig.dashDur} repeatCount="indefinite" />
               </path>
 
-              {/* PR Release Glassmorphic Badge - positioned cleanly above staging track before curve takeoff */}
-              <rect x="660" y="85" width="105" height="20" rx="10" fill="rgba(245, 158, 11, 0.14)" stroke="rgba(245, 158, 11, 0.5)" strokeWidth="1" />
-              <circle cx="672" cy="95" r="3" fill="#f59e0b" />
-              <text x="681" y="99" fill="#f59e0b" fontSize="9.5" fontFamily="var(--font-mono)" fontWeight="600">
+              {/* PR Release Glassmorphic Badge - located in top row at x=665, y=14, completely clear of the curve */}
+              <rect x="665" y="14" width="142" height="22" rx="11" fill="rgba(26, 16, 8, 0.88)" stroke="rgba(245, 158, 11, 0.55)" strokeWidth="1" />
+              <circle cx="678" cy="25" r="3.5" fill="#f59e0b" />
+              <text x="689" y="29" fill="#f59e0b" fontSize="10" fontFamily="var(--font-mono)" fontWeight="600">
                 PR #42 (Release)
               </text>
 
