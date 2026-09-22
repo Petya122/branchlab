@@ -143,7 +143,7 @@ export function getInitialGitState(model: BranchingModel): GitGraphState {
   const c1: Commit = {
     id: 'c1',
     hash: '1a2b3c4',
-    message: 'Initial production deploy on Vercel',
+    message: 'Initial production deploy on Oracle Cloud (Docker)',
     parents: [],
     branch: 'main',
     timestamp: Date.now() - 3600000 * 4,

@@ -139,7 +139,7 @@ export const PipelineViewer: React.FC<PipelineViewerProps> = ({
         })}
       </div>
 
-      {/* Vercel Deployment Link Preview if deploy succeeded */}
+      {/* Cloud Deployment Link Preview if deploy succeeded */}
       {run.stages.find((s) => s.id === 'deploy')?.status === 'success' && (
         <div
           style={{

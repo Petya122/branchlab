@@ -122,7 +122,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           }}
         >
           An interactive laboratory designed for software developers and DevOps students.
-          Simulate GitFlow, Trunk-Based releases, branch protection quality gates, and automated deployments to Vercel.
+          Simulate GitFlow, Trunk-Based releases, branch protection quality gates, and automated deployments to Cloud Infrastructure (Docker & OCI).
         </p>
 
         {/* CTA Buttons */}

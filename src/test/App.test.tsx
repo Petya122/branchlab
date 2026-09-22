@@ -3,17 +3,9 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import App from '../App'
 
-// Mock canvas-confetti and Vercel analytics
+// Mock canvas-confetti
 vi.mock('canvas-confetti', () => ({
   default: vi.fn(),
-}))
-
-vi.mock('@vercel/analytics/react', () => ({
-  Analytics: () => null,
-}))
-
-vi.mock('@vercel/speed-insights/react', () => ({
-  SpeedInsights: () => null,
 }))
 
 describe('App Component', () => {

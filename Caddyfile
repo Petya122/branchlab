@@ -1,0 +1,3 @@
+branchlab.tech, www.branchlab.tech {
+    reverse_proxy branchlab:80
+}

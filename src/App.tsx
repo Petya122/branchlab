@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
 import confetti from 'canvas-confetti'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/react'
 import type {
   BranchingModel,
   Commit,
@@ -726,7 +724,7 @@ export const App: React.FC = () => {
             <div className="panel-header">
               <div className="panel-title">
                 <Play size={16} color="#10b981" />
-                CI/CD Pipeline Simulator (Vitest & Vercel)
+                CI/CD Pipeline Simulator (Vitest & Docker / Cloud)
               </div>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                 Vite + Vitest + GitHub Actions
@@ -831,10 +829,6 @@ export const App: React.FC = () => {
         onResetTrophies={handleResetTrophies}
         onResetTour={handleResetTour}
       />
-
-      {/* Vercel Monitoring */}
-      <Analytics />
-      <SpeedInsights />
     </div>
   )
 }

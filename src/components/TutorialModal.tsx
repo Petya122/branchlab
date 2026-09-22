@@ -69,7 +69,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
       badge: 'Module 2: CI/CD Pipeline',
       title: 'Automated Build Gates & Chaos Injection',
       description:
-        'In DevOps, every commit triggers automated verification. BranchLab executes 5 stages: Lint & Style, Unit Tests (Vitest), SAST Security Audit, Vite Build, and Vercel Deploy.',
+        'In DevOps, every commit triggers automated verification. BranchLab executes 5 stages: Lint & Style, Unit Tests (Vitest), SAST Security Audit, Vite Build, and Cloud Deploy (Docker).',
       icon: <Play size={28} color="#10b981" />,
       accentColor: '#10b981',
       bullets: [

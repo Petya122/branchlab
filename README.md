@@ -71,6 +71,16 @@ npm run typecheck
 npm run build
 ```
 
+### 5. Run with Docker & Docker Compose
+
+```bash
+# Build and run with automated HTTPS
+docker compose up -d --build
+
+# View container logs
+docker compose logs -f
+```
+
 ---
 
 ## 🧪 DevOps & Testing Architecture

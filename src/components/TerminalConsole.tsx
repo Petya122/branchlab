@@ -38,7 +38,7 @@ export const TerminalConsole: React.FC<TerminalConsoleProps> = ({
     if (line.includes('[SUCCESS]') || line.includes('PASS') || line.includes('✅') || line.includes('🚀')) {
       return 'log-success'
     }
-    if (line.startsWith('$') || line.includes('[CI]') || line.includes('[VITEST]') || line.includes('[VERCEL]')) {
+    if (line.startsWith('$') || line.includes('[CI]') || line.includes('[VITEST]') || line.includes('[CLOUD]') || line.includes('[DOCKER]')) {
       return 'log-command'
     }
     return 'log-info'
