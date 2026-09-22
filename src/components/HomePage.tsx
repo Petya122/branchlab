@@ -94,7 +94,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <Sparkles size={13} />
           <span>DevOps és tesztelés • Soproni Egyetem</span>
           <span style={{ opacity: 0.5 }}>|</span>
-          <span style={{ color: '#34d399' }}>branchlab.me</span>
+          <span style={{ color: '#34d399' }}>branchlab.tech</span>
         </div>
 
         {/* Hero Title */}
@@ -152,7 +152,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <CheckCircle2 size={14} color="#34d399" /> 24+ Automated Vitest Tests
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <Globe size={14} color="#a855f7" /> Live on branchlab.me
+            <Globe size={14} color="#a855f7" /> Live on branchlab.tech
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <ShieldCheck size={14} color="#f59e0b" /> Branch Protection Gates
@@ -268,7 +268,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* Main Branch Label */}
               <circle cx="73" cy="35" r="3.5" fill="#10b981" />
               <text x="83" y="39" fill="#10b981" fontSize="11" fontFamily="var(--font-mono)" fontWeight="700">
-                main (v1.0.0 → branchlab.me)
+                main (v1.0.0 → branchlab.tech)
               </text>
 
               {/* 2. DEVELOP BRANCH RAIL & CONNECTION */}
@@ -528,12 +528,12 @@ export const HomePage: React.FC<HomePageProps> = ({
           <span><strong>DevOps School Project</strong> — Soproni Egyetem</span>
           <span>•</span>
           <a
-            href="https://branchlab.me"
+            href="https://branchlab.tech"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: '#38bdf8', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
           >
-            <Globe size={12} /> branchlab.me
+            <Globe size={12} /> branchlab.tech
           </a>
           <span>•</span>
           <a
@@ -545,7 +545,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <GithubIcon /> Petya122/branchlab
           </a>
         </div>
-        <div>Continuous Deployment verified with Vitest & Vercel Edge Network.</div>
+        <div>Continuous Deployment verified with Vitest & Cloud Infrastructure.</div>
       </footer>
     </div>
   )

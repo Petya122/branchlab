@@ -43,7 +43,7 @@ export const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
   },
   {
     id: 'deploy',
-    name: 'Deploy to Vercel (branchlab.me)',
+    name: 'Deploy (branchlab.tech)',
     description: 'Promotes artifacts to edge CDN & DNS',
     status: 'idle',
     durationMs: 0,
@@ -153,11 +153,11 @@ export function generateStageLogs(
   }
 
   if (stageId === 'deploy') {
-    const domain = branch === 'main' ? 'https://branchlab.me' : `https://branchlab-preview-${commitHash}.vercel.app`
+    const domain = branch === 'main' ? 'https://branchlab.tech' : `https://branchlab-preview-${commitHash}.edge.app`
     return [
-      `[${timestamp}] [VERCEL] Promoting build artifacts to edge network...`,
-      `[${timestamp}] [VERCEL] Provisioning SSL certificate & DNS records...`,
-      `[${timestamp}] [VERCEL] Environment: ${branch === 'main' ? 'PRODUCTION' : 'PREVIEW'}`,
+      `[${timestamp}] [CLOUD] Promoting build artifacts to edge network...`,
+      `[${timestamp}] [CLOUD] Provisioning SSL certificate & DNS records...`,
+      `[${timestamp}] [CLOUD] Environment: ${branch === 'main' ? 'PRODUCTION' : 'PREVIEW'}`,
       `[${timestamp}] [SUCCESS] Deployed successfully to ${domain} 🚀`,
     ]
   }

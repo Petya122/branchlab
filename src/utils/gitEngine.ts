@@ -61,7 +61,7 @@ export function getInitialGitState(model: BranchingModel): GitGraphState {
         color: '#10b981',
         isProtected: true,
         isDefault: true,
-        description: 'Production releases (branchlab.me)',
+        description: 'Production releases (branchlab.tech)',
       },
       develop: {
         name: 'develop',

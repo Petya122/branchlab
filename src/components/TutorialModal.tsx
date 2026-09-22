@@ -47,7 +47,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
         'Simulate a full 5-stage CI/CD release pipeline with real-time logs.',
         'Practice resolving 3-way Git merge conflicts and branch protection rules.',
       ],
-      proTip: 'Target Domain: branchlab.me — Deployed automatically using GitHub Actions & Vercel!',
+      proTip: 'Target Domain: branchlab.tech — Deployed automatically using GitHub Actions & Cloud Hosting!',
     },
     {
       stepNumber: 2,

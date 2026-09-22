@@ -17,10 +17,10 @@ vi.mock('@vercel/speed-insights/react', () => ({
 }))
 
 describe('App Component', () => {
-  it('renders the header with BranchLab and the branchlab.me domain badge', () => {
+  it('renders the header with BranchLab and the branchlab.tech domain badge', () => {
     render(<App />)
     expect(screen.getByText('BranchLab')).toBeInTheDocument()
-    expect(screen.getAllByText(/branchlab.me/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/branchlab.tech/i).length).toBeGreaterThan(0)
   })
 
   it('renders both Home and Interactive Lab navigation tabs', () => {

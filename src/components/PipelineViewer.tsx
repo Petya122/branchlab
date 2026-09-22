@@ -156,11 +156,11 @@ export const PipelineViewer: React.FC<PipelineViewerProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <CheckCircle2 size={16} color="#34d399" />
             <span style={{ fontSize: '12px', color: '#34d399' }}>
-              Deployment Live on <strong>branchlab.me</strong>
+              Deployment Live on <strong>branchlab.tech</strong>
             </span>
           </div>
           <a
-            href="https://branchlab.me"
+            href="https://branchlab.tech"
             target="_blank"
             rel="noopener noreferrer"
             style={{

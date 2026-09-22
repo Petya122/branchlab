@@ -13,7 +13,7 @@ describe('HomePage Component', () => {
       screen.getByText(/Master Git Branching & CI\/CD Pipelines in Real-Time/i)
     ).toBeInTheDocument()
     expect(screen.getAllByText(/Soproni Egyetem/i).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/branchlab.me/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/branchlab.tech/i).length).toBeGreaterThan(0)
   })
 
   it('renders all four bento feature highlight cards', () => {

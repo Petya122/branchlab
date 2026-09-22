@@ -48,8 +48,8 @@ describe('pipelineEngine', () => {
     expect(failLogs.some((l) => l.includes('exit code 1'))).toBe(true)
   })
 
-  it('includes production branchlab.me domain in deploy logs on main branch', () => {
+  it('includes production branchlab.tech domain in deploy logs on main branch', () => {
     const deployLogs = generateStageLogs('deploy', true, 'main', '7a12b4e')
-    expect(deployLogs.some((l) => l.includes('https://branchlab.me'))).toBe(true)
+    expect(deployLogs.some((l) => l.includes('https://branchlab.tech'))).toBe(true)
   })
 })

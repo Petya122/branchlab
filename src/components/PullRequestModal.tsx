@@ -181,8 +181,8 @@ export const PullRequestModal: React.FC<PullRequestModalProps> = ({
             }}
           >
             <div style={{ color: '#38bdf8', marginBottom: '6px' }}>diff --git a/src/App.tsx b/src/App.tsx</div>
-            <div style={{ color: '#ef4444' }}>- const API_ENDPOINT = "https://legacy-api.branchlab.me";</div>
-            <div style={{ color: '#10b981' }}>+ const API_ENDPOINT = "https://branchlab.me/api/v2";</div>
+            <div style={{ color: '#ef4444' }}>- const API_ENDPOINT = "https://legacy-api.branchlab.tech";</div>
+            <div style={{ color: '#10b981' }}>+ const API_ENDPOINT = "https://branchlab.tech/api/v2";</div>
             <div style={{ color: '#10b981' }}>+ export const FEATURE_FLAGS = {'{'} ssoAuth: true {'}'};</div>
           </div>
         )}

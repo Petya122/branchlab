@@ -16,7 +16,7 @@ export const SCENARIOS: Scenario[] = [
     badge: 'Production Incident',
     difficulty: 'Intermediate',
     description:
-      'A critical vulnerability was discovered in production on branchlab.me. You must branch off main, apply a hotfix commit, run CI/CD to verify green tests, and merge back to main.',
+      'A critical vulnerability was discovered in production on branchlab.tech. You must branch off main, apply a hotfix commit, run CI/CD to verify green tests, and merge back to main.',
     objective: 'Create a branch named hotfix/patch, commit a fix, and merge it back to main.',
     initialModel: 'gitflow',
     hint: 'Use [+ New Branch] from main, then make a commit, and finally click [🔀 Merge] into main.',

@@ -40,7 +40,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleExportData = () => {
     const exportData = {
       app: 'BranchLab',
-      domain: 'branchlab.me',
+      domain: 'branchlab.tech',
       exportedAt: new Date().toISOString(),
       settings,
       trophyState,

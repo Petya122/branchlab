@@ -23,19 +23,19 @@ export const MergeConflictModal: React.FC<MergeConflictModalProps> = ({
   const getResolvedCode = () => {
     if (selectedResolution === 'current') {
       return `// Resolved using Current Change (${targetBranch})
-export const API_BASE = "https://api.branchlab.me/v1";
+export const API_BASE = "https://api.branchlab.tech/v1";
 export const MAX_RETRY_COUNT = 3;
 export const AUTH_PROVIDER = "sso-oauth2";`
     }
     if (selectedResolution === 'incoming') {
       return `// Resolved using Incoming Change (${sourceBranch})
-export const API_BASE = "https://api.branchlab.me/v2-edge";
+export const API_BASE = "https://api.branchlab.tech/v2-edge";
 export const MAX_RETRY_COUNT = 5;
 export const AUTH_PROVIDER = "sso-oauth2-pkce";`
     }
     return `// Resolved combining Both Changes
-export const API_BASE_V1 = "https://api.branchlab.me/v1";
-export const API_BASE_V2 = "https://api.branchlab.me/v2-edge";
+export const API_BASE_V1 = "https://api.branchlab.tech/v1";
+export const API_BASE_V2 = "https://api.branchlab.tech/v2-edge";
 export const MAX_RETRY_COUNT = 5;
 export const AUTH_PROVIDER = "sso-oauth2-pkce";`
   }
@@ -97,13 +97,13 @@ export const AUTH_PROVIDER = "sso-oauth2-pkce";`
             {'<<<<<<< HEAD (' + targetBranch + ')'}
           </div>
           <div style={{ color: '#94a3b8', background: 'rgba(56, 189, 248, 0.08)', padding: '2px 4px' }}>
-            export const API_BASE = "https://api.branchlab.me/v1";<br />
+            export const API_BASE = "https://api.branchlab.tech/v1";<br />
             export const MAX_RETRY_COUNT = 3;<br />
             export const AUTH_PROVIDER = "sso-oauth2";
           </div>
           <div style={{ color: '#64748b', fontWeight: 'bold' }}>{'======='}</div>
           <div style={{ color: '#94a3b8', background: 'rgba(168, 85, 247, 0.08)', padding: '2px 4px' }}>
-            export const API_BASE = "https://api.branchlab.me/v2-edge";<br />
+            export const API_BASE = "https://api.branchlab.tech/v2-edge";<br />
             export const MAX_RETRY_COUNT = 5;<br />
             export const AUTH_PROVIDER = "sso-oauth2-pkce";
           </div>

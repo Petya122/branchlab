@@ -248,7 +248,7 @@ export const App: React.FC = () => {
       setPipelineRun({ ...currentRun, status: 'passed' })
       setLogs((prev) => [
         ...prev,
-        `[CI/CD RESULT] All checks passed! Production release live on https://branchlab.me ✨`,
+        `[CI/CD RESULT] All checks passed! Production release live on https://branchlab.tech ✨`,
       ])
 
       // Award Quality Gatekeeper trophy
@@ -498,14 +498,14 @@ export const App: React.FC = () => {
                 BranchLab
               </span>
               <a
-                href="https://branchlab.me"
+                href="https://branchlab.tech"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="domain-badge"
                 title="Target Production Domain"
               >
                 <Globe size={11} />
-                branchlab.me
+                branchlab.tech
               </a>
             </h1>
           </div>
