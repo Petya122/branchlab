@@ -572,8 +572,11 @@ export const App: React.FC = () => {
             title="Open DevOps Trophy Room"
           >
             <Trophy size={14} color="#f59e0b" />
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#f59e0b' }}>
+            <span className="trophy-text-full" style={{ fontSize: '11px', fontWeight: '700', color: '#f59e0b' }}>
               Lvl {currentLevel.level} • {trophyState.xp} XP
+            </span>
+            <span className="trophy-text-short" style={{ fontSize: '11px', fontWeight: '700', color: '#f59e0b' }}>
+              Lvl {currentLevel.level}
             </span>
           </button>
 

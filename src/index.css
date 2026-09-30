@@ -764,41 +764,75 @@ body {
   gap: 20px;
 }
 
+/* Trophy button responsive text */
+.trophy-text-short {
+  display: none;
+}
+.trophy-text-full {
+  display: inline;
+}
+
+@media (max-width: 600px) {
+  .trophy-text-short {
+    display: inline;
+  }
+  .trophy-text-full {
+    display: none;
+  }
+}
+
 /* Tablet & Mobile Breakpoint (<= 992px) */
 @media (max-width: 992px) {
   .desktop-selectors {
     display: none !important;
   }
 
-  .sub-navbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: rgba(10, 16, 26, 0.95);
-    border-bottom: 1px solid var(--border-subtle);
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+  .navbar {
+    flex-wrap: wrap !important;
+    padding: 8px 14px !important;
+    gap: 6px 10px !important;
   }
 
-  .sub-navbar::-webkit-scrollbar {
-    display: none;
+  /* Row 1 Left: Brand */
+  .brand-section {
+    order: 1 !important;
+    flex-shrink: 0 !important;
   }
 
-  .sub-navbar .model-selector {
-    flex-shrink: 0;
+  /* Row 1 Right: Controls (Trophy, Tour, Settings) */
+  .navbar-controls {
+    order: 2 !important;
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  /* Row 2: Dedicated Navigation Strip (Home, Lab, and Strategy Switchers) */
+  .nav-selectors-strip {
+    order: 3 !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    padding: 4px 0 2px !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .nav-selectors-strip::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .nav-selectors-strip .model-selector {
+    flex-shrink: 0 !important;
   }
 }
 
 /* Phone Breakpoint (<= 768px) */
 @media (max-width: 768px) {
-  .navbar {
-    padding: 10px 14px;
-    gap: 8px;
-  }
-
   .brand-logo {
     width: 32px;
     height: 32px;
@@ -823,7 +857,7 @@ body {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 6px;
-    padding: 8px 12px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) 12px;
     background: rgba(12, 18, 30, 0.96);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--border-subtle);
@@ -867,7 +901,7 @@ body {
   }
 
   .dashboard-grid {
-    padding: 10px 12px;
+    padding: 10px 12px calc(75px + env(safe-area-inset-bottom, 0px)) 12px !important;
     gap: 14px;
   }
 
@@ -937,6 +971,15 @@ body {
 
 /* Extra Small Phones (<= 480px) */
 @media (max-width: 480px) {
+  .navbar-controls {
+    gap: 4px !important;
+  }
+
+  .navbar-controls .action-btn {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+
   .panel-header {
     padding: 10px 12px;
   }
