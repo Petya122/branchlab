@@ -104,6 +104,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             lineHeight: 1.15,
             letterSpacing: '-0.03em',
             marginBottom: '18px',
+            fontSize: 'clamp(26px, 5.5vw, 48px)',
             background: 'linear-gradient(to right, #f8fafc, #cbd5e1, #38bdf8)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -118,6 +119,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             color: 'var(--text-secondary)',
             lineHeight: 1.6,
             maxWidth: '720px',
+            fontSize: 'clamp(14px, 2.5vw, 16px)',
             margin: '0 auto 32px',
           }}
         >
@@ -126,7 +128,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </p>
 
         {/* CTA Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '40px' }}>
+        <div className="hero-cta-group" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '40px' }}>
           <button
             className="action-btn btn-primary"
             style={{ fontSize: '15px', padding: '12px 28px', borderRadius: '10px' }}
@@ -169,6 +171,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           position: 'relative',
         }}
       >
+        <div className="mobile-swipe-hint">← Swipe horizontally to explore branching animation →</div>
         <div
           style={{
             background: 'linear-gradient(180deg, #090e18, #05080f)',
@@ -211,8 +214,9 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
 
           {/* Living SVG Canvas */}
-          <div style={{ width: '100%', height: '245px', position: 'relative' }}>
-            <svg viewBox="0 0 900 245" style={{ width: '100%', height: '100%' }}>
+          <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ width: '100%', minWidth: '700px', height: '245px', position: 'relative' }}>
+              <svg viewBox="0 0 900 245" style={{ width: '100%', height: '100%' }}>
               <defs>
                 {/* Fixed Linear Gradients with userSpaceOnUse for robust cross-browser rendering */}
                 <linearGradient id="mainRail" gradientUnits="userSpaceOnUse" x1="50" y1="55" x2="840" y2="55">
@@ -411,6 +415,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </circle>
               </g>
             </svg>
+            </div>
           </div>
         </div>
       </section>
@@ -432,13 +437,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </p>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '20px',
-          }}
-        >
+        <div className="bento-grid">
           {/* Card 1 */}
           <div
             className="card-panel"

@@ -117,7 +117,7 @@ export const AUTH_PROVIDER = "sso-oauth2-pkce";`
           <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px' }}>
             Choose Resolution Strategy:
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+          <div className="conflict-resolutions-grid">
             <button
               type="button"
               className={`chaos-toggle-btn ${selectedResolution === 'current' ? 'active' : ''}`}

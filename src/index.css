@@ -723,3 +723,251 @@ body {
   gap: 10px;
   margin-top: 20px;
 }
+
+/* ====================================================================
+   MOBILE & PHONE VIEW RESPONSIVE ENHANCEMENTS
+   ==================================================================== */
+
+.sub-navbar {
+  display: none;
+}
+
+.mobile-action-bar {
+  display: none;
+}
+
+.mobile-swipe-hint {
+  display: none;
+}
+
+.nav-selectors-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.conflict-resolutions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* Tablet & Mobile Breakpoint (<= 992px) */
+@media (max-width: 992px) {
+  .desktop-selectors {
+    display: none !important;
+  }
+
+  .sub-navbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(10, 16, 26, 0.95);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .sub-navbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sub-navbar .model-selector {
+    flex-shrink: 0;
+  }
+}
+
+/* Phone Breakpoint (<= 768px) */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-info h1 {
+    font-size: 16px;
+    gap: 6px;
+  }
+
+  .domain-badge {
+    display: none; /* Hide badge inside h1 on phones to prevent crowding */
+  }
+
+  /* Hide desktop action bar buttons in top navbar */
+  .nav-actions.desktop-actions {
+    display: none !important;
+  }
+
+  /* Fixed / Docked Mobile Action Bar in Lab Mode */
+  .mobile-action-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(12, 18, 30, 0.96);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-subtle);
+    position: sticky;
+    bottom: 0;
+    z-index: 45;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.6);
+  }
+
+  .mobile-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    min-height: 44px;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-action-btn:active {
+    transform: scale(0.96);
+    background: var(--bg-surface-hover);
+  }
+
+  .mobile-action-btn.btn-run-ci {
+    grid-column: span 5;
+    flex-direction: row;
+    font-size: 13px;
+    min-height: 42px;
+    background: linear-gradient(135deg, #0284c7, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
+  }
+
+  .dashboard-grid {
+    padding: 10px 12px;
+    gap: 14px;
+  }
+
+  /* Swipe indicator above Git Canvas */
+  .mobile-swipe-hint {
+    display: block;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4px 0 2px;
+    letter-spacing: 0.02em;
+    font-family: var(--font-mono);
+  }
+
+  /* Modals responsiveness */
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    padding: 18px 14px !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  /* Stacking 3-way conflict resolution buttons on mobile */
+  .conflict-resolutions-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Responsive Terminal */
+  .terminal-window {
+    height: 240px;
+  }
+
+  /* Bento Grid Mobile Stacking */
+  .bento-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  /* Hero CTA Group Stacking */
+  .hero-cta-group {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .hero-cta-group .action-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* Extra Small Phones (<= 480px) */
+@media (max-width: 480px) {
+  .panel-header {
+    padding: 10px 12px;
+  }
+
+  .panel-title {
+    font-size: 13px;
+  }
+
+  .stage-card {
+    padding: 10px;
+  }
+
+  .stage-title {
+    font-size: 12px;
+  }
+
+  .stage-desc {
+    font-size: 10px;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stage-duration {
+    font-size: 10px;
+  }
+
+  .stage-icon-box {
+    width: 28px;
+    height: 28px;
+  }
+}
+

@@ -509,53 +509,55 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* View Switcher: Home vs Interactive Lab */}
-        <div className="model-selector">
-          <button
-            className={`model-button ${currentView === 'home' ? 'active' : ''}`}
-            onClick={() => setCurrentView('home')}
-          >
-            <Home size={13} />
-            Home
-          </button>
-          <button
-            className={`model-button ${currentView === 'lab' ? 'active' : ''}`}
-            onClick={() => setCurrentView('lab')}
-          >
-            <Cpu size={13} />
-            Interactive Lab
-          </button>
-        </div>
-
-        {/* In Lab Mode: Branching Strategy Switcher */}
-        {currentView === 'lab' && (
+        {/* Navigation Selector Strip (Home/Lab & Git Branching Strategies) */}
+        <div className="nav-selectors-strip">
           <div className="model-selector">
             <button
-              className={`model-button ${model === 'gitflow' ? 'active' : ''}`}
-              onClick={() => handleModelChange('gitflow')}
+              className={`model-button ${currentView === 'home' ? 'active' : ''}`}
+              onClick={() => setCurrentView('home')}
             >
-              <GitBranch size={13} />
-              GitFlow
+              <Home size={13} />
+              Home
             </button>
             <button
-              className={`model-button ${model === 'trunk-based' ? 'active' : ''}`}
-              onClick={() => handleModelChange('trunk-based')}
+              className={`model-button ${currentView === 'lab' ? 'active' : ''}`}
+              onClick={() => setCurrentView('lab')}
             >
-              <GitCommit size={13} />
-              Trunk-Based
-            </button>
-            <button
-              className={`model-button ${model === 'github-flow' ? 'active' : ''}`}
-              onClick={() => handleModelChange('github-flow')}
-            >
-              <GitMerge size={13} />
-              GitHub Flow
+              <Cpu size={13} />
+              Interactive Lab
             </button>
           </div>
-        )}
+
+          {/* In Lab Mode: Branching Strategy Switcher */}
+          {currentView === 'lab' && (
+            <div className="model-selector">
+              <button
+                className={`model-button ${model === 'gitflow' ? 'active' : ''}`}
+                onClick={() => handleModelChange('gitflow')}
+              >
+                <GitBranch size={13} />
+                GitFlow
+              </button>
+              <button
+                className={`model-button ${model === 'trunk-based' ? 'active' : ''}`}
+                onClick={() => handleModelChange('trunk-based')}
+              >
+                <GitCommit size={13} />
+                Trunk-Based
+              </button>
+              <button
+                className={`model-button ${model === 'github-flow' ? 'active' : ''}`}
+                onClick={() => handleModelChange('github-flow')}
+              >
+                <GitMerge size={13} />
+                GitHub Flow
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Right Navbar Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="navbar-controls">
           {/* DevOps Rank & Trophy Widget */}
           <button
             className="action-btn btn-ghost"
@@ -604,9 +606,9 @@ export const App: React.FC = () => {
           </button>
         </div>
 
-        {/* Quick Actions (only in Lab view) */}
+        {/* Quick Actions (only in Lab view, desktop) */}
         {currentView === 'lab' && (
-          <div className="nav-actions">
+          <div className="nav-actions desktop-actions">
             <button
               className="action-btn btn-ghost"
               onClick={() => setIsCommitModalOpen(true)}
@@ -766,6 +768,55 @@ export const App: React.FC = () => {
             </div>
           </section>
         </main>
+      )}
+
+      {/* Mobile Quick Actions Dock in Lab view */}
+      {currentView === 'lab' && (
+        <aside className="mobile-action-bar">
+          <button
+            className="mobile-action-btn"
+            onClick={() => setIsCommitModalOpen(true)}
+          >
+            <GitCommit size={16} color="#38bdf8" />
+            <span>Commit</span>
+          </button>
+          <button
+            className="mobile-action-btn"
+            onClick={() => setIsBranchModalOpen(true)}
+          >
+            <GitBranch size={16} color="#a855f7" />
+            <span>Branch</span>
+          </button>
+          <button
+            className="mobile-action-btn"
+            onClick={() => setIsMergeModalOpen(true)}
+          >
+            <GitMerge size={16} color="#10b981" />
+            <span>Merge</span>
+          </button>
+          <button
+            className="mobile-action-btn"
+            onClick={() => setIsPrModalOpen(true)}
+          >
+            <GitPullRequest size={16} color="#c084fc" />
+            <span>PR</span>
+          </button>
+          <button
+            className="mobile-action-btn"
+            onClick={() => setIsConflictModalOpen(true)}
+          >
+            <AlertTriangle size={16} color="#f59e0b" />
+            <span>Conflict</span>
+          </button>
+          <button
+            className="mobile-action-btn btn-run-ci"
+            onClick={handleRunPipeline}
+            disabled={isPipelineRunning}
+          >
+            <Play size={15} />
+            <span>{isPipelineRunning ? 'Running Pipeline...' : 'Trigger Pipeline'}</span>
+          </button>
+        </aside>
       )}
 
       {/* Action Modals */}

@@ -49,7 +49,8 @@ export const GitCanvas: React.FC<GitCanvasProps> = ({
 
   return (
     <div className="canvas-wrapper">
-      <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+      <div className="mobile-swipe-hint">← Swipe horizontally to explore Git graph →</div>
+      <div style={{ flex: 1, overflow: 'auto', position: 'relative', WebkitOverflowScrolling: 'touch' }}>
         <svg
           className="canvas-svg"
           viewBox={`0 0 ${totalWidth} ${totalHeight}`}
