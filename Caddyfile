@@ -1,3 +1,15 @@
 branchlab.tech, www.branchlab.tech {
     reverse_proxy branchlab:80
 }
+
+dockge.branchlab.tech {
+    reverse_proxy dockge:5001
+}
+
+lecture4-frontend.branchlab.tech {
+    reverse_proxy lecture4-frontend:80
+}
+
+lecture4-backend.branchlab.tech {
+    reverse_proxy lecture4-backend:4000
+}

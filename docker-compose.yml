@@ -25,12 +25,15 @@ services:
       - caddy_config:/config
     networks:
       - webnet
+      - nginx-proxy-network
     depends_on:
       - branchlab
 
 networks:
   webnet:
     driver: bridge
+  nginx-proxy-network:
+    external: true
 
 volumes:
   caddy_data:
