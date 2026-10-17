@@ -1,5 +1,6 @@
 services:
   branchlab:
+    image: branchlab:latest
     build:
       context: .
       dockerfile: Dockerfile
