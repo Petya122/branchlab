@@ -38,10 +38,13 @@ jobs:
     name: 🚀 Deploy to Oracle Cloud
     needs: validate-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.SSH_HOST != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: 🌐 Deploy via SSH
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        if: env.SSH_HOST != ''
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: "${{ secrets.SSH_HOST }}"
