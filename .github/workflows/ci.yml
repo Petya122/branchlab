@@ -33,3 +33,21 @@ jobs:
 
       - name: 🚀 Build Production Bundle (Vite)
         run: npm run build
+
+  deploy:
+    name: 🚀 Deploy to Oracle Cloud
+    needs: validate-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 🌐 Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/branchlab
+            git pull origin main
+            docker compose up -d --build
