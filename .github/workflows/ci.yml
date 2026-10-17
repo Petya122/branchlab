@@ -42,9 +42,6 @@ jobs:
 
     steps:
       - name: 🌐 Deploy via SSH
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-        if: env.SSH_HOST != ''
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: "${{ secrets.SSH_HOST }}"
@@ -54,4 +51,4 @@ jobs:
             cd ~/branchlab
             git pull origin main
             docker compose build
-            docker compose up -d
+            docker compose up -d --force-recreate
