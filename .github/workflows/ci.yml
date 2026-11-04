@@ -57,11 +57,11 @@ jobs:
 
       - name: 🌐 Validate Caddyfile
         run: |
-          HASH=$(docker run --rm caddy:2-alpine caddy hash-password --plaintext ci-only-dummy)
+          HASH=$(docker run --rm caddy:2.11.7-alpine caddy hash-password --plaintext ci-only-dummy)
           docker run --rm \
             -e ARCANE_AUTH_USER=ci -e ARCANE_AUTH_HASH="$HASH" \
             -v "$PWD/infra/caddy/conf:/etc/caddy:ro" \
-            caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+            caddy:2.11.7-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
   docker-image:
     name: Docker Image

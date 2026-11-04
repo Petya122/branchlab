@@ -50,3 +50,16 @@ updates:
       default-days: 3
     commit-message:
       prefix: chore(docker)
+
+  # Pinned server images in the infra compose files (Caddy, Arcane)
+  - package-ecosystem: docker-compose
+    directories:
+      - /infra/caddy
+      - /infra/arcane
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: chore(infra)

@@ -19,7 +19,9 @@ deploy job refuses to run while the server checkout has uncommitted changes.
 ├── docker-compose.yml        BranchLab app (image from GHCR, no host ports)
 ├── .env                      IMAGE_TAG=sha-xxxxxxx, written by infra/deploy.sh
 └── infra/
-    ├── deploy.sh             Pull + start an image tag, reload Caddy
+    ├── deploy.sh             Pull + start an image tag, update Arcane, reload Caddy
+    ├── host/
+    │   └── setup-host.sh     OS-level setup: disk, fail2ban, auto-updates, Docker logs
     ├── caddy/
     │   ├── compose.yml       Edge proxy, the only container with public ports (80/443)
     │   ├── conf/Caddyfile    All public hostnames
@@ -35,7 +37,7 @@ and are addressed by container name in the Caddyfile. No app publishes host port
 
 | Hostname | Upstream | Defined in |
 | :--- | :--- | :--- |
-| branchlab.tech, www.branchlab.tech | `branchlab:80` | `docker-compose.yml` |
+| branchlab.tech, www.branchlab.tech | `branchlab:8080` (non-root nginx) | `docker-compose.yml` |
 | arcane.branchlab.tech | `arcane:3552` (+ basic auth) | `infra/arcane/compose.yml` |
 | codeblue.branchlab.tech | `codeblue-backend:3001` | `~/codeblue` (separate project) |
 
@@ -91,6 +93,39 @@ bash infra/deploy.sh sha-1a2b3c4                    # manual rollback (or use th
 cat .env                                            # which image tag is deployed
 docker system df && docker image prune -a           # disk usage / cleanup
 ```
+
+## Host setup (`infra/host/setup-host.sh`)
+
+Everything configured on the OS itself (outside Docker) is in one idempotent
+script. Run it once on a new server, or again after changing it:
+
+```bash
+ssh -t ssh.branchlab.tech "sudo bash ~/branchlab/infra/host/setup-host.sh"
+```
+
+| Area | Configuration |
+| :--- | :--- |
+| Disk | `oci-growfs` grows `/` into the whole 75 GB boot volume |
+| SSH brute force | fail2ban `sshd` jail: 5 failures / 10 min → 1 h ban, increasing for repeat offenders (bans via firewalld) |
+| Updates | `dnf-automatic`: security updates installed daily (~06:00), automatic reboot only when a kernel/core library requires it |
+| Docker logs | `json-file`, max 10 MB × 3 files per container; `live-restore` keeps containers running across Docker restarts |
+
+Useful checks: `sudo fail2ban-client status sshd`, `systemctl list-timers 'dnf*'`,
+`sudo dnf updateinfo list --security`, `needs-restarting -r`.
+
+## OCI Security List (the outer firewall)
+
+Docker-published ports bypass firewalld, so the OCI Security List is what
+really decides what is reachable. Ingress rules (source `0.0.0.0/0`):
+
+| Port | Why |
+| :--- | :--- |
+| 22/tcp | SSH: key-only login + fail2ban. Can't be limited to one IP because GitHub Actions deploys over SSH from changing addresses |
+| 80/tcp | HTTP → redirected to HTTPS by Caddy, also used for certificate issuance |
+| 443/tcp | HTTPS |
+| 443/udp | HTTP/3 (QUIC), optional |
+
+Nothing else. App ports such as 5000, 3001 or 3552 must not be opened.
 
 ## Base OS setup (already done, kept for reference)
 

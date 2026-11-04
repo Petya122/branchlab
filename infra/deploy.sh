@@ -17,6 +17,9 @@ echo "IMAGE_TAG=${TAG}" > .env
 docker compose pull branchlab
 docker compose up -d --no-build --wait --wait-timeout 120 branchlab
 
+echo "==> Updating Arcane (version pinned in infra/arcane/compose.yml)"
+docker compose -f infra/arcane/compose.yml up -d
+
 echo "==> Updating Caddy"
 docker compose -f infra/caddy/compose.yml up -d
 docker exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
