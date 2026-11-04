@@ -250,7 +250,40 @@ export function createBranch(
       [newBranchName]: newBranch,
     },
     activeBranch: newBranchName,
+    // `git checkout -b new base` moves HEAD to the base commit
+    headCommitId: targetCommitId,
   }
+}
+
+/** True if `ancestorId` is reachable from `descendantId` by following parents (or is the same commit). */
+export function isAncestor(state: GitGraphState, ancestorId: string, descendantId: string): boolean {
+  const byId = new Map(state.commits.map((c) => [c.id, c]))
+  const stack = [descendantId]
+  const seen = new Set<string>()
+  while (stack.length > 0) {
+    const id = stack.pop()!
+    if (id === ancestorId) return true
+    if (seen.has(id)) continue
+    seen.add(id)
+    stack.push(...(byId.get(id)?.parents ?? []))
+  }
+  return false
+}
+
+/** Checks shared by every kind of merge; throws with a git-like message. */
+function assertMergeable(state: GitGraphState, sourceBranchName: string, targetBranchName: string) {
+  const source = state.branches[sourceBranchName]
+  const target = state.branches[targetBranchName]
+  if (!source || !target) {
+    throw new Error('Both source and target branches must exist to merge.')
+  }
+  if (sourceBranchName === targetBranchName) {
+    throw new Error(`Cannot merge '${sourceBranchName}' into itself.`)
+  }
+  if (isAncestor(state, source.targetCommitId, target.targetCommitId)) {
+    throw new Error(`Already up to date: '${targetBranchName}' already contains '${sourceBranchName}'.`)
+  }
+  return { source, target }
 }
 
 export function checkoutBranch(state: GitGraphState, branchName: string): GitGraphState {
@@ -265,17 +298,16 @@ export function checkoutBranch(state: GitGraphState, branchName: string): GitGra
   }
 }
 
+/**
+ * `git merge --no-ff`: always records a merge commit with two parents (the
+ * GitFlow convention), so the merge stays visible in the graph.
+ */
 export function mergeBranches(
   state: GitGraphState,
   sourceBranchName: string,
   targetBranchName: string
 ): { nextState: GitGraphState; mergeCommit: Commit } {
-  const source = state.branches[sourceBranchName]
-  const target = state.branches[targetBranchName]
-
-  if (!source || !target) {
-    throw new Error('Both source and target branches must exist to merge.')
-  }
+  const { source, target } = assertMergeable(state, sourceBranchName, targetBranchName)
 
   const newCommitId = `c${state.commits.length + 1}`
   const mergeCommit: Commit = {
@@ -305,4 +337,54 @@ export function mergeBranches(
     },
     mergeCommit,
   }
+}
+
+/**
+ * GitHub "Squash and merge": all changes of the source branch become ONE new
+ * commit on the target with a single parent. The source branch is not an
+ * ancestor of the result, exactly like on GitHub.
+ */
+export function squashMerge(
+  state: GitGraphState,
+  sourceBranchName: string,
+  targetBranchName: string,
+  message: string
+): { nextState: GitGraphState; squashCommit: Commit } {
+  const { target } = assertMergeable(state, sourceBranchName, targetBranchName)
+
+  const newCommitId = `c${state.commits.length + 1}`
+  const squashCommit: Commit = {
+    id: newCommitId,
+    hash: generateShortHash(),
+    message,
+    parents: [target.targetCommitId],
+    branch: targetBranchName,
+    timestamp: Date.now(),
+    author: 'You (via Pull Request)',
+  }
+
+  return {
+    nextState: {
+      ...state,
+      commits: [...state.commits, squashCommit],
+      branches: {
+        ...state.branches,
+        [targetBranchName]: { ...target, targetCommitId: newCommitId },
+      },
+      headCommitId: newCommitId,
+      activeBranch: targetBranchName,
+    },
+    squashCommit,
+  }
+}
+
+/**
+ * Where a branch is integrated: GitFlow feature branches go to develop,
+ * everything else to the default branch (main).
+ */
+export function integrationTarget(state: GitGraphState): string {
+  if (state.model === 'gitflow' && state.activeBranch.startsWith('feature/') && state.branches['develop']) {
+    return 'develop'
+  }
+  return Object.values(state.branches).find((b) => b.isDefault)?.name ?? 'main'
 }

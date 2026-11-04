@@ -19,9 +19,11 @@ export const GitCanvas: React.FC<GitCanvasProps> = ({
   selectedCommitId,
   onSelectCommit,
 }) => {
-  // Map branch names to fixed vertical lanes (lanes sorted logically)
+  // Map branch names to fixed vertical lanes: main and develop (when they
+  // exist in this model) on top, then the other branches in creation order
   const branchNames = Object.keys(state.branches)
-  const sortedBranches = ['main', 'develop', ...branchNames.filter((b) => b !== 'main' && b !== 'develop')]
+  const pinned = ['main', 'develop'].filter((b) => branchNames.includes(b))
+  const sortedBranches = [...pinned, ...branchNames.filter((b) => !pinned.includes(b))]
   const branchLaneMap: Record<string, number> = {}
   sortedBranches.forEach((name, index) => {
     branchLaneMap[name] = index

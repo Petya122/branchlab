@@ -156,19 +156,34 @@ describe('App under React StrictMode', () => {
 })
 
 describe('useGitSimulator', () => {
-  function setup() {
-    const deps = { log: vi.fn(), triggerTrophy: vi.fn(), onNewHead: vi.fn() }
-    const hook = renderHook(() => useGitSimulator('gitflow', deps))
+  type CiStatus = 'idle' | 'running' | 'passed' | 'failed'
+  function setup(
+    opts: { model?: 'gitflow' | 'trunk-based' | 'github-flow'; strict?: boolean; ci?: (hash: string) => CiStatus } = {}
+  ) {
+    const deps = {
+      log: vi.fn(),
+      triggerTrophy: vi.fn(),
+      onNewHead: vi.fn(),
+      strictBranchProtection: opts.strict ?? true,
+      ciStatusFor: vi.fn(opts.ci ?? ((): CiStatus => 'passed')),
+    }
+    const hook = renderHook(() => useGitSimulator(opts.model ?? 'gitflow', deps))
     return { ...hook, deps }
   }
   const logged = (deps: { log: ReturnType<typeof vi.fn> }) => deps.log.mock.calls.flat().map(String)
 
-  it('targets develop for feature branches and main otherwise', () => {
+  it('integrates GitFlow feature branches into develop and everything else into main', () => {
     const { result } = setup()
     expect(result.current.gitState.activeBranch).toBe('feature/auth')
-    expect(result.current.conflictTarget).toBe('develop')
-    act(() => result.current.checkout('main'))
-    expect(result.current.conflictTarget).toBe('main')
+    expect(result.current.integrationTarget).toBe('develop')
+    act(() => result.current.createBranch('hotfix/x', 'main'))
+    expect(result.current.integrationTarget).toBe('main')
+  })
+
+  it('targets main for feature branches in GitHub Flow (there is no develop)', () => {
+    const { result } = setup({ model: 'github-flow' })
+    expect(result.current.gitState.branches['develop']).toBeUndefined()
+    expect(result.current.integrationTarget).toBe('main')
   })
 
   it('resolves a merge conflict with a merge commit and a trophy', () => {
@@ -181,18 +196,43 @@ describe('useGitSimulator', () => {
     expect(deps.triggerTrophy).toHaveBeenCalledWith('conflict-master')
   })
 
-  it('squash-merges a pull request into main with the PR title', () => {
+  // Regression: in GitHub Flow the conflict targeted the non-existent develop
+  // branch, the merge failed silently and still printed success + a trophy.
+  it('really merges a GitHub Flow conflict into main', () => {
+    const { result, deps } = setup({ model: 'github-flow' })
+    const before = result.current.gitState.commits.length
+    act(() => result.current.resolveConflict('incoming'))
+    expect(result.current.gitState.commits.length).toBe(before + 1)
+    expect(result.current.gitState.activeBranch).toBe('main')
+    expect(deps.triggerTrophy).toHaveBeenCalledWith('conflict-master')
+  })
+
+  it('reports a failed conflict merge instead of faking success', () => {
     const { result, deps } = setup()
+    act(() => result.current.resolveConflict('both')) // feature/auth -> develop
+    act(() => result.current.checkout('feature/auth'))
+    deps.triggerTrophy.mockClear()
+    act(() => result.current.resolveConflict('both')) // nothing new to merge
+    expect(logged(deps).some((l) => l.startsWith('[CONFLICT] Already up to date'))).toBe(true)
+    expect(deps.triggerTrophy).not.toHaveBeenCalled()
+  })
+
+  // Regression: "Squash & merge" used to create a two-parent merge commit.
+  it('squash-merges a pull request as one single-parent commit with the PR title', () => {
+    const { result, deps } = setup()
+    const developHead = result.current.gitState.branches['develop'].targetCommitId
     act(() => result.current.mergePullRequest('feat: SSO login'))
-    const head = result.current.gitState.commits.find((c) => c.id === result.current.selectedCommit?.id)
-    expect(head?.message).toBe('feat: SSO login (#24)')
-    expect(head?.branch).toBe('main')
+    const squash = result.current.selectedCommit!
+    expect(squash.message).toBe('feat: SSO login (#24)')
+    expect(squash.branch).toBe('develop')
+    expect(squash.parents).toEqual([developHead])
+    expect(squash.isMerge).toBeFalsy()
+    expect(result.current.prNumber).toBe(25)
     expect(deps.triggerTrophy).toHaveBeenCalledWith('pr-champion')
   })
 
   it('awards the hotfix trophy only for hotfix branches merged into main', () => {
     const { result, deps } = setup()
-    act(() => result.current.checkout('main'))
     act(() => result.current.createBranch('hotfix/urgent', 'main'))
     act(() => result.current.commit('fix: urgent patch'))
     act(() => result.current.merge('hotfix/urgent', 'main'))
@@ -200,11 +240,55 @@ describe('useGitSimulator', () => {
     expect(deps.onNewHead).toHaveBeenCalled()
   })
 
+  // Regression: the "Strict Branch Protection" setting used to do nothing.
+  describe('branch protection', () => {
+    it('blocks direct commits to main while enforced', () => {
+      const { result, deps } = setup()
+      act(() => result.current.checkout('main'))
+      const before = result.current.gitState.commits.length
+      act(() => result.current.commit('fix: straight to prod'))
+      expect(result.current.gitState.commits.length).toBe(before)
+      expect(logged(deps).some((l) => l.startsWith("[BRANCH PROTECTION] Direct commits to 'main'"))).toBe(true)
+    })
+
+    it('blocks merges into main from a branch without green CI', () => {
+      const { result, deps } = setup({ ci: () => 'failed' })
+      act(() => result.current.createBranch('hotfix/untested', 'main'))
+      act(() => result.current.commit('fix: untested'))
+      const before = result.current.gitState.commits.length
+      act(() => result.current.merge('hotfix/untested', 'main'))
+      expect(result.current.gitState.commits.length).toBe(before)
+      expect(logged(deps).some((l) => l.startsWith("[BRANCH PROTECTION] 'main' is protected"))).toBe(true)
+    })
+
+    it('allows everything in Permissive mode', () => {
+      const { result } = setup({ strict: false, ci: () => 'idle' })
+      act(() => result.current.checkout('main'))
+      const before = result.current.gitState.commits.length
+      act(() => result.current.commit('fix: allowed'))
+      act(() => result.current.merge('develop', 'main'))
+      expect(result.current.gitState.commits.length).toBe(before + 2)
+    })
+
+    it('does not protect develop', () => {
+      const { result } = setup({ ci: () => 'idle' })
+      act(() => result.current.merge('feature/auth', 'develop'))
+      expect(result.current.gitState.activeBranch).toBe('develop')
+    })
+  })
+
+  it('reports CI per branch head commit', () => {
+    const { result } = setup({ ci: (hash) => (hash === '5d88e2b' ? 'passed' : 'idle') })
+    expect(result.current.ciStatusOfBranch('feature/auth')).toBe('passed')
+    expect(result.current.ciStatusOfBranch('develop')).toBe('idle')
+  })
+
   it('logs errors instead of throwing for invalid operations', () => {
     const { result, deps } = setup()
     act(() => result.current.createBranch('main', 'develop'))
-    act(() => result.current.merge('nope', 'main'))
-    expect(logged(deps).filter((l) => l.startsWith('[ERROR]'))).toHaveLength(2)
+    act(() => result.current.merge('nope', 'develop'))
+    act(() => result.current.merge('develop', 'develop'))
+    expect(logged(deps).filter((l) => l.startsWith('[ERROR]'))).toHaveLength(3)
   })
 
   it('resets the graph when the branching model changes', () => {
@@ -214,5 +298,27 @@ describe('useGitSimulator', () => {
     expect(result.current.model).toBe('github-flow')
     expect(result.current.selectedCommit).toBeNull()
     expect(deps.triggerTrophy).not.toHaveBeenCalledWith('trunk-pioneer')
+  })
+})
+
+describe('usePipelineSimulator results per commit', () => {
+  // Regression: the PR gate read "the last run", so a green run on one branch
+  // unlocked PRs from any other branch after a checkout.
+  it('remembers the result only for the commit that was tested', async () => {
+    vi.useFakeTimers()
+    const deps = { log: vi.fn(), triggerTrophy: vi.fn(), onPassed: vi.fn(), animationSpeed: 'fast' as const }
+    const target = { commitHash: 'aaa1111', commitMessage: 'm', branch: 'feature/x' }
+    const { result } = renderHook(() => usePipelineSimulator(target, deps))
+    expect(result.current.statusFor('aaa1111')).toBe('idle')
+    await act(async () => {
+      const run = result.current.runPipeline(target)
+      await vi.runAllTimersAsync()
+      await run
+    })
+    expect(result.current.statusFor('aaa1111')).toBe('passed')
+    expect(result.current.statusFor('bbb2222')).toBe('idle')
+    expect(deps.log.mock.calls.flat().map(String)).toContain(
+      "[CI/CD RESULT] All checks passed on 'feature/x' ✨ Preview deployed; merge to main to release."
+    )
   })
 })

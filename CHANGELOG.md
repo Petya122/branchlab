@@ -7,6 +7,32 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-04
+
+Simulator correctness: the lab now follows its own Git and branch-protection rules.
+
+### Fixed
+- **CI gate bypass:** the pull request used the result of the *last* pipeline run, so a green run
+  on one branch unlocked a PR from any other branch after `git checkout`. CI results are now stored
+  per commit (like GitHub status checks) and the PR checks the head commit of its own branch.
+- **Fake conflict merge:** in Trunk-Based and GitHub Flow the conflict targeted the non-existent
+  `develop` branch, failed silently, yet printed "resolved" and awarded the trophy. Feature branches
+  now integrate into `develop` only in GitFlow, otherwise into `main`; failures are reported.
+- **Branch protection did nothing:** with "Strict Branch Protection" on (the default), direct commits
+  to `main` are blocked and merges into `main` need a green pipeline on the source branch.
+- **Squash & merge** created a two-parent merge commit; it now creates one single-parent commit on the
+  target, like GitHub. PR numbers count up, and GitFlow feature PRs target `develop`.
+- `git checkout -b <new> <base>` from another branch left HEAD on the old commit.
+- Merging a branch into itself (possible from the terminal) and merging an already-merged branch
+  created empty merge commits; they now fail with git-like messages ("Already up to date").
+- An empty `develop` lane was drawn in Trunk-Based and GitHub Flow.
+- Opening a PR or conflict while on the integration target itself is explained instead of opening.
+- Feature-branch pipeline runs no longer claim a production release.
+- `Esc` closes the open dialog (e.g. the onboarding tour).
+
+### Added
+- 21 regression tests (128 in total); each fails on the previous code.
+
 ## [1.4.0] - 2026-11-04
 
 Proper login for the Arcane admin UI.
@@ -131,7 +157,8 @@ First versioned release. Production runs on Oracle Cloud at https://branchlab.te
 - Deprecated `X-XSS-Protection` header.
 - Routes for the retired lecture4 demo stack.
 
-[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/Petya122/branchlab/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/Petya122/branchlab/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Petya122/branchlab/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Petya122/branchlab/compare/v1.1.0...v1.2.0

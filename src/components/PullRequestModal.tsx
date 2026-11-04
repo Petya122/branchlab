@@ -13,6 +13,7 @@ import {
 
 interface PullRequestModalProps {
   isOpen: boolean
+  prNumber?: number
   sourceBranch: string
   targetBranch: string
   ciStatus: 'idle' | 'running' | 'passed' | 'failed'
@@ -22,6 +23,7 @@ interface PullRequestModalProps {
 
 export const PullRequestModal: React.FC<PullRequestModalProps> = ({
   isOpen,
+  prNumber = 24,
   sourceBranch,
   targetBranch,
   ciStatus,
@@ -61,7 +63,7 @@ export const PullRequestModal: React.FC<PullRequestModalProps> = ({
                   gap: '4px',
                 }}
               >
-                <GitPullRequest size={12} /> Open PR #24
+                <GitPullRequest size={12} /> Open PR #{prNumber}
               </span>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                 into <code style={{ color: '#10b981' }}>{targetBranch}</code> from <code style={{ color: '#a855f7' }}>{sourceBranch}</code>
@@ -156,7 +158,7 @@ export const PullRequestModal: React.FC<PullRequestModalProps> = ({
                     ❌ <strong>Branch protection rule active:</strong> Merging is blocked until all CI/CD pipeline checks are green.
                     <br />
                     <span style={{ color: '#f87171' }}>
-                      Run the pipeline or disable failing chaos checks to unblock this PR.
+                      Run the pipeline on <code>{sourceBranch}</code> (or disable failing chaos checks) to unblock this PR.
                     </span>
                   </div>
                 )}
