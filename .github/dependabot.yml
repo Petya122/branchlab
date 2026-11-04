@@ -1,4 +1,11 @@
 version: 2
+
+# Cooldown: Dependabot only proposes a release once it has been public for a
+# few days. Compromised packages (e.g. the 2025 npm supply-chain attacks) are
+# usually detected and unpublished within that window. Security updates for
+# known vulnerabilities are NOT delayed by the cooldown.
+# All updates are merged manually after CI passes (no auto-merge).
+
 updates:
   # npm packages: minor + patch updates grouped into one weekly PR,
   # major updates arrive as separate PRs so they can be reviewed one by one.
@@ -7,6 +14,11 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 5
     open-pull-requests-limit: 5
     groups:
       npm-minor-and-patch:
@@ -20,6 +32,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns: ['*']
@@ -32,5 +46,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: chore(docker)
