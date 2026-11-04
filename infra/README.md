@@ -23,6 +23,7 @@ deploy job refuses to run while the server checkout has uncommitted changes.
     ├── caddy/
     │   ├── compose.yml       Edge proxy, the only container with public ports (80/443)
     │   ├── conf/Caddyfile    All public hostnames
+    │   ├── set-arcane-password.sh
     │   └── .env              ARCANE_AUTH_USER / ARCANE_AUTH_HASH (server only)
     └── arcane/
         ├── compose.yml       Docker management UI (behind Caddy basic auth)
@@ -58,7 +59,7 @@ git clone https://github.com/Petya122/branchlab.git ~/branchlab && cd ~/branchla
 docker network create proxy
 
 # Secrets (never committed)
-cp infra/caddy/.env.example infra/caddy/.env     # then fill in, see below
+bash infra/caddy/set-arcane-password.sh           # see below
 cp infra/arcane/.env.example infra/arcane/.env   # then fill in
 
 docker compose -f infra/arcane/compose.yml up -d
@@ -68,20 +69,15 @@ bash infra/deploy.sh latest   # needs `docker login ghcr.io` if the package is p
 
 ### Arcane password (Caddy basic auth)
 
-Run this on the server. It asks for the password and prints a bcrypt hash:
+Run this on the server. It asks for a username and password, stores only the
+bcrypt hash in `infra/caddy/.env` and restarts Caddy if it is running:
 
 ```bash
-docker run --rm -it caddy:2-alpine caddy hash-password
+bash ~/branchlab/infra/caddy/set-arcane-password.sh
 ```
 
-Put the user and the hash in `infra/caddy/.env`, in **single quotes** (the hash contains `$`):
-
-```
-ARCANE_AUTH_USER='peter'
-ARCANE_AUTH_HASH='$2a$14$....'
-```
-
-Then apply it: `docker compose -f infra/caddy/compose.yml up -d --force-recreate`.
+On a phone or PC, `https://arcane.branchlab.tech` first shows the browser's
+username/password prompt (Caddy), then Arcane's own login.
 
 ## Everyday commands
 
