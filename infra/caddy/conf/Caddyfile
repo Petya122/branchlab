@@ -17,10 +17,9 @@
 	}
 }
 
-# Imported by every site. Error responses (e.g. the basic-auth 401 prompt or a
-# 502 when an upstream is down) skip the normal `header` handler, so they get
-# the same headers through handle_errors. WWW-Authenticate is preserved, so the
-# browser's password prompt still appears.
+# Imported by every site. Error responses (e.g. a 502 when an upstream is down)
+# skip the normal `header` handler, so they get the same headers through
+# handle_errors.
 (security) {
 	import security_headers
 	handle_errors {
@@ -35,14 +34,25 @@ branchlab.tech, www.branchlab.tech {
 	reverse_proxy branchlab:8080
 }
 
+# Login wall (infra/tinyauth): every request must carry a valid tinyauth
+# session cookie (password + TOTP), otherwise browsers are redirected to
+# https://auth.branchlab.tech. If tinyauth is down, requests fail (no bypass).
+(tinyauth) {
+	forward_auth tinyauth:3000 {
+		uri /api/auth/caddy
+	}
+}
+
+auth.branchlab.tech {
+	import security
+	reverse_proxy tinyauth:3000
+}
+
 # Arcane (Docker management UI) has full control over the Docker socket,
-# so it gets an extra password layer in front of its own login.
-# ARCANE_AUTH_USER / ARCANE_AUTH_HASH come from infra/caddy/.env (server only).
+# so it sits behind the tinyauth login in addition to its own login.
 arcane.branchlab.tech {
 	import security
-	basic_auth {
-		{$ARCANE_AUTH_USER} {$ARCANE_AUTH_HASH}
-	}
+	import tinyauth
 	reverse_proxy arcane:3552
 }
 

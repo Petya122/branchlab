@@ -1,5 +1,5 @@
 # Arcane - Docker management UI, published only through Caddy
-# (https://arcane.branchlab.tech, behind basic auth). No host ports.
+# (https://arcane.branchlab.tech, behind the tinyauth login). No host ports.
 #   docker compose -f infra/arcane/compose.yml up -d
 name: arcane
 

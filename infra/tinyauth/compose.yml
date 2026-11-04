@@ -1,0 +1,46 @@
+# tinyauth - login page (password + TOTP) in front of admin UIs such as Arcane.
+# Caddy asks it on every request (forward_auth); the login lives in a cookie
+# on .branchlab.tech, so there are no browser password pop-ups.
+#   Start / update:  docker compose -f infra/tinyauth/compose.yml up -d
+#   Add a user:      bash infra/tinyauth/set-user.sh
+name: tinyauth
+
+services:
+  tinyauth:
+    image: ghcr.io/tinyauthapp/tinyauth:v5.2.0
+    container_name: tinyauth
+    restart: unless-stopped
+    # The image's own unprivileged user (it owns /data)
+    user: "1000:1000"
+    env_file:
+      # TINYAUTH_AUTH_USERS, written by set-user.sh (server only, never committed)
+      - path: .env
+        required: false
+    environment:
+      TINYAUTH_APPURL: https://auth.branchlab.tech
+      TINYAUTH_AUTH_SECURECOOKIE: "true"
+      # 7 days, then log in again
+      TINYAUTH_AUTH_SESSIONEXPIRY: "604800"
+      # 5 wrong passwords -> locked for 15 minutes
+      TINYAUTH_AUTH_LOGINMAXRETRIES: "5"
+      TINYAUTH_AUTH_LOGINTIMEOUT: "900"
+      # Trust X-Forwarded-For from Caddy (the "proxy" network), so lockouts
+      # and logs see the visitor's IP instead of Caddy's
+      TINYAUTH_AUTH_TRUSTEDPROXIES: 172.21.0.0/16
+      TINYAUTH_DATABASE_PATH: /data/tinyauth.db
+      # No Docker-label ACLs, so no Docker socket access needed
+      TINYAUTH_LABELPROVIDER: none
+      TINYAUTH_ANALYTICS_ENABLED: "false"
+    volumes:
+      - tinyauth-data:/data
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  tinyauth-data:
+    name: tinyauth_data
