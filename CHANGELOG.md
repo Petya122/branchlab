@@ -17,6 +17,8 @@ Proper login for the Arcane admin UI.
   15-minute lockout after 5 wrong passwords. Caddy checks every Arcane request with `forward_auth`.
 - `infra/tinyauth/set-user.sh` creates or replaces the login and shows the TOTP QR code.
 - Dependabot also updates the pinned tinyauth image.
+- tinyauth is hidden in Arcane (stopping it there would lock Arcane), and Arcane's own
+  updater is off for tinyauth and Caddy: their versions come from Git via Dependabot.
 
 ### Removed
 - Caddy basic auth on Arcane (`set-arcane-password.sh`, `infra/caddy/.env`). Arcane's own

@@ -12,6 +12,10 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp" # HTTP/3
+    labels:
+      # Version is pinned here and updated by Dependabot, not by Arcane
+      - com.getarcaneapp.arcane.updater=false
+      - com.getarcaneapp.arcane.update-check=false
     volumes:
       # Mount the directory, not the single file: `git pull` replaces the file,
       # and a single-file bind mount would keep pointing at the old version.
