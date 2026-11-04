@@ -134,7 +134,7 @@ test.describe('Production server', () => {
     expect(h['content-security-policy']).toContain("default-src 'self'")
     expect(h['x-frame-options']).toBe('SAMEORIGIN')
     expect(h['x-content-type-options']).toBe('nosniff')
-    expect(h['referrer-policy']).toBe('strict-origin-when-cross-origin')
+    expect(h['referrer-policy']).toBe('no-referrer')
     expect(h['server'] ?? '').not.toMatch(/\d/) // no version number
   })
 

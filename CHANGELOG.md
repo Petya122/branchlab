@@ -7,6 +7,10 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Changed
+- `Referrer-Policy` is now `no-referrer`: other sites (e.g. GitHub, when following a link)
+  no longer learn that the visitor came from branchlab.tech.
+
 ## [1.2.0] - 2026-11-04
 
 Testing and maintainability.
