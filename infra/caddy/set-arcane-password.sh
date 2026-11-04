@@ -12,7 +12,7 @@ read -rsp "Repeat password: " pw2; echo
 [[ -n "$pw" && "$pw" == "$pw2" ]] || { echo "Passwords are empty or do not match." >&2; exit 1; }
 
 # caddy reads one line from stdin, so the trailing newline is required
-hash=$(printf '%s\n' "$pw" | docker run --rm -i caddy:2-alpine caddy hash-password | tr -d '\r' | tail -n1)
+hash=$(printf '%s\n' "$pw" | docker run --rm -i caddy:2.11.7-alpine caddy hash-password | tr -d '\r' | tail -n1)
 unset pw pw2
 [[ "$hash" == \$2* ]] || { echo "Hashing failed." >&2; exit 1; }
 

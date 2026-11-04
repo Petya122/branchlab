@@ -7,6 +7,27 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-04
+
+Security hardening round 2.
+
+### Added
+- Content-Security-Policy (only same-origin scripts, styles, fonts and images).
+- HSTS (`max-age=1y; includeSubDomains`) on every site via a shared Caddy snippet.
+- `infra/host/setup-host.sh`: OS setup as code, covering growing `/` to the full boot volume,
+  fail2ban for SSH, automatic security updates with reboot-when-needed and Docker log rotation.
+- Dependabot now also updates the pinned Caddy and Arcane images in `infra/`.
+
+### Changed
+- The app container runs nginx as a non-root user (`nginx-unprivileged`, port 8080).
+- Base images are pinned to exact versions (Node 26.13.0, nginx 1.31.7, Caddy 2.11.7, Arcane v2.17.3).
+- Fonts (Inter, JetBrains Mono) are self-hosted instead of loaded from Google Fonts.
+- TypeScript `strict` mode is enabled in all tsconfig files.
+- The deploy also applies the Arcane compose file, so its version is managed in Git.
+
+### Removed
+- `Server` (nginx version) and `Via` response headers.
+
 ## [1.0.0] - 2026-11-04
 
 First versioned release. Production runs on Oracle Cloud at https://branchlab.tech.
@@ -41,5 +62,6 @@ First versioned release. Production runs on Oracle Cloud at https://branchlab.te
 - Deprecated `X-XSS-Protection` header.
 - Routes for the retired lecture4 demo stack.
 
-[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Petya122/branchlab/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Petya122/branchlab/releases/tag/v1.0.0

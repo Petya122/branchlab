@@ -5,7 +5,7 @@ name: arcane
 
 services:
   arcane:
-    image: ghcr.io/getarcaneapp/manager:latest
+    image: ghcr.io/getarcaneapp/manager:v2.17.3
     container_name: arcane
     restart: always
     volumes:
