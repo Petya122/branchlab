@@ -120,6 +120,9 @@ step "4/5 Recreating containers so the log limits apply"
 cd "$REPO_DIR"
 docker compose up -d --no-build --force-recreate --wait --wait-timeout 120
 docker compose -f infra/arcane/compose.yml up -d --force-recreate
+if [[ -f infra/tinyauth/.env ]]; then
+  docker compose -f infra/tinyauth/compose.yml up -d --force-recreate
+fi
 docker compose -f infra/caddy/compose.yml up -d --force-recreate
 if [[ -f "$OWNER_HOME/codeblue/docker-compose.yml" ]]; then
   (cd "$OWNER_HOME/codeblue" && docker compose up -d --no-build --force-recreate)

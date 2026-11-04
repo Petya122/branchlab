@@ -19,16 +19,18 @@ deploy job refuses to run while the server checkout has uncommitted changes.
 ├── docker-compose.yml        BranchLab app (image from GHCR, no host ports)
 ├── .env                      IMAGE_TAG=sha-xxxxxxx, written by infra/deploy.sh
 └── infra/
-    ├── deploy.sh             Pull + start an image tag, update Arcane, reload Caddy
+    ├── deploy.sh             Pull + start an image tag, update Arcane/tinyauth, reload Caddy
     ├── host/
     │   └── setup-host.sh     OS-level setup: disk, fail2ban, auto-updates, Docker logs
     ├── caddy/
     │   ├── compose.yml       Edge proxy, the only container with public ports (80/443)
-    │   ├── conf/Caddyfile    All public hostnames
-    │   ├── set-arcane-password.sh
-    │   └── .env              ARCANE_AUTH_USER / ARCANE_AUTH_HASH (server only)
+    │   └── conf/Caddyfile    All public hostnames
+    ├── tinyauth/
+    │   ├── compose.yml       Login page (password + TOTP) in front of Arcane
+    │   ├── set-user.sh       Creates / replaces the login, shows the TOTP QR code
+    │   └── .env              TINYAUTH_AUTH_USERS (server only, written by set-user.sh)
     └── arcane/
-        ├── compose.yml       Docker management UI (behind Caddy basic auth)
+        ├── compose.yml       Docker management UI (behind tinyauth)
         └── .env              APP_URL / ENCRYPTION_KEY (server only)
 ```
 
@@ -38,7 +40,8 @@ and are addressed by container name in the Caddyfile. No app publishes host port
 | Hostname | Upstream | Defined in |
 | :--- | :--- | :--- |
 | branchlab.tech, www.branchlab.tech | `branchlab:8080` (non-root nginx) | `docker-compose.yml` |
-| arcane.branchlab.tech | `arcane:3552` (+ basic auth) | `infra/arcane/compose.yml` |
+| arcane.branchlab.tech | `arcane:3552` (behind tinyauth) | `infra/arcane/compose.yml` |
+| auth.branchlab.tech | `tinyauth:3000` (login page) | `infra/tinyauth/compose.yml` |
 | codeblue.branchlab.tech | `codeblue-backend:3001` | `~/codeblue` (separate project) |
 
 ## Adding a new site
@@ -61,25 +64,43 @@ git clone https://github.com/Petya122/branchlab.git ~/branchlab && cd ~/branchla
 docker network create proxy
 
 # Secrets (never committed)
-bash infra/caddy/set-arcane-password.sh           # see below
 cp infra/arcane/.env.example infra/arcane/.env   # then fill in
+bash infra/tinyauth/set-user.sh                  # see below (also starts tinyauth)
 
 docker compose -f infra/arcane/compose.yml up -d
 docker compose -f infra/caddy/compose.yml up -d
 bash infra/deploy.sh latest   # needs `docker login ghcr.io` if the package is private
 ```
 
-### Arcane password (Caddy basic auth)
+DNS: `branchlab.tech`, `www`, `arcane`, `auth` and `codeblue` are A records
+pointing to the server.
 
-Run this on the server. It asks for a username and password, stores only the
-bcrypt hash in `infra/caddy/.env` and restarts Caddy if it is running:
+### Arcane login (tinyauth)
+
+Arcane controls the Docker socket, so it has two logins: **tinyauth** first
+(password + 6-digit code from an authenticator app), then Arcane's own.
+
+How it works: Caddy asks tinyauth about every Arcane request (`forward_auth`).
+Without a valid session cookie, browsers are redirected to
+`https://auth.branchlab.tech`. After login, the cookie (`Secure`, `HttpOnly`,
+domain `.branchlab.tech`) is valid for **7 days**. 5 wrong passwords lock the
+login for 15 minutes. If tinyauth is down, Arcane is unreachable (no bypass).
+
+A cookie login replaced the earlier Caddy basic auth. Arcane answers its own
+"session expired" checks with 401, which made the browser forget the basic-auth
+password and ask for it again several times in a row.
+
+Create or replace the login (also after losing the phone with the authenticator
+app). It asks for a username and password, shows a QR code to scan, stores the
+bcrypt hash and TOTP secret in `infra/tinyauth/.env` (mode 600) and restarts
+tinyauth:
 
 ```bash
-bash ~/branchlab/infra/caddy/set-arcane-password.sh
+ssh -t ssh.branchlab.tech "bash ~/branchlab/infra/tinyauth/set-user.sh"
 ```
 
-On a phone or PC, `https://arcane.branchlab.tech` first shows the browser's
-username/password prompt (Caddy), then Arcane's own login.
+Log out everywhere: `docker compose -f infra/tinyauth/compose.yml down -v && bash infra/tinyauth/set-user.sh`
+(removing the volume deletes all sessions).
 
 ## Everyday commands
 

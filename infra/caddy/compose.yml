@@ -12,8 +12,6 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp" # HTTP/3
-    env_file:
-      - .env
     volumes:
       # Mount the directory, not the single file: `git pull` replaces the file,
       # and a single-file bind mount would keep pointing at the old version.

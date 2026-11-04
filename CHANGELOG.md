@@ -7,6 +7,21 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-04
+
+Proper login for the Arcane admin UI.
+
+### Added
+- **tinyauth** (`infra/tinyauth`) in front of Arcane: a login page at `auth.branchlab.tech` with
+  password + TOTP (authenticator app), a 7-day `Secure`/`HttpOnly` session cookie and a
+  15-minute lockout after 5 wrong passwords. Caddy checks every Arcane request with `forward_auth`.
+- `infra/tinyauth/set-user.sh` creates or replaces the login and shows the TOTP QR code.
+- Dependabot also updates the pinned tinyauth image.
+
+### Removed
+- Caddy basic auth on Arcane (`set-arcane-password.sh`, `infra/caddy/.env`). Arcane's own
+  401 responses made browsers forget the basic-auth password and ask for it several times in a row.
+
 ## [1.3.0] - 2026-11-04
 
 Strict Content-Security-Policy, modal tests and privacy.
@@ -114,7 +129,8 @@ First versioned release. Production runs on Oracle Cloud at https://branchlab.te
 - Deprecated `X-XSS-Protection` header.
 - Routes for the retired lecture4 demo stack.
 
-[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/Petya122/branchlab/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Petya122/branchlab/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Petya122/branchlab/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Petya122/branchlab/compare/v1.0.0...v1.1.0

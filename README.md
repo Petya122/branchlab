@@ -121,7 +121,8 @@ flowchart LR
 
     subgraph vm[OCI VM - Oracle Linux, ARM64]
         caddy[Caddy :80/:443<br/>automatic HTTPS] -->|proxy network| app[branchlab_app<br/>Nginx + static build]
-        caddy --> arcane[Arcane<br/>basic auth]
+        caddy -->|forward_auth| tinyauth[tinyauth<br/>password + TOTP]
+        caddy --> arcane[Arcane]
         caddy --> codeblue[codeblue-backend]
     end
 

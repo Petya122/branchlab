@@ -20,6 +20,15 @@ docker compose up -d --no-build --wait --wait-timeout 120 branchlab
 echo "==> Updating Arcane (version pinned in infra/arcane/compose.yml)"
 docker compose -f infra/arcane/compose.yml up -d
 
+echo "==> Updating tinyauth (login for Arcane)"
+if [[ -f infra/tinyauth/.env ]]; then
+  docker compose -f infra/tinyauth/compose.yml up -d --wait --wait-timeout 60
+else
+  # tinyauth refuses to start without a user. Arcane stays locked (502)
+  # until someone runs the setup script once.
+  echo "WARNING: no tinyauth user yet - run: bash infra/tinyauth/set-user.sh" >&2
+fi
+
 echo "==> Updating Caddy"
 docker compose -f infra/caddy/compose.yml up -d
 # If the container was just (re)created, Caddy's admin API needs a moment

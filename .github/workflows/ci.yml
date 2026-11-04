@@ -69,17 +69,15 @@ jobs:
 
       - name: 🧾 Validate Compose Files
         run: |
-          cp infra/caddy/.env.example infra/caddy/.env
           cp infra/arcane/.env.example infra/arcane/.env
           docker compose -f docker-compose.yml config -q
           docker compose -f infra/caddy/compose.yml config -q
           docker compose -f infra/arcane/compose.yml config -q
+          docker compose -f infra/tinyauth/compose.yml config -q
 
       - name: 🌐 Validate Caddyfile
         run: |
-          HASH=$(docker run --rm caddy:2.11.7-alpine caddy hash-password --plaintext ci-only-dummy)
           docker run --rm \
-            -e ARCANE_AUTH_USER=ci -e ARCANE_AUTH_HASH="$HASH" \
             -v "$PWD/infra/caddy/conf:/etc/caddy:ro" \
             caddy:2.11.7-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
