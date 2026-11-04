@@ -22,7 +22,19 @@ docker compose -f infra/arcane/compose.yml up -d
 
 echo "==> Updating Caddy"
 docker compose -f infra/caddy/compose.yml up -d
-docker exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+# If the container was just (re)created, Caddy's admin API needs a moment
+# before it accepts a reload, so retry for up to ~30 seconds.
+for attempt in $(seq 1 15); do
+  if docker exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile; then
+    break
+  fi
+  if [[ $attempt -eq 15 ]]; then
+    echo "Caddy reload failed" >&2
+    exit 1
+  fi
+  echo "Caddy not ready yet, retrying ($attempt/15)..."
+  sleep 2
+done
 
 echo "==> Cleaning up dangling images"
 docker image prune -f
