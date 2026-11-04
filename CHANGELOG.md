@@ -7,6 +7,32 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-04
+
+Testing and maintainability.
+
+### Added
+- Code coverage with `@vitest/coverage-v8`. CI fails below the configured thresholds, shows a
+  coverage table in the job summary and uploads the HTML report.
+- Integration tests for the whole Interactive Lab, plus unit tests for the new hooks and the
+  terminal command parser (34 → 85 tests, coverage 44% → 83% lines).
+- Playwright end-to-end tests (desktop and mobile Chromium). CI runs them against the freshly
+  built production Docker image before it is pushed, checking for console/CSP errors,
+  third-party requests, lab flows, security headers and `/version.json`.
+- `aria-label="Close"` on all modal close buttons.
+
+### Changed
+- `App.tsx` split from 890 to ~220 lines: `useGitSimulator`, `usePipelineSimulator`,
+  `useTrophies`, `useTerminalLog` and `useModals` hooks, a pure `parseTerminalCommand` parser,
+  and `AppNavbar`, `LabDashboard` and `LabQuickActions` components.
+- Eight separate modal flags replaced by a single "open modal" state.
+
+### Fixed
+- In development (React StrictMode), unlocked achievements and chaos toggles were logged twice
+  because side effects ran inside state updaters.
+- Caddy error responses (Arcane's basic-auth 401 prompt, 502 pages) now also send HSTS and no
+  `Server` header (`handle_errors` in the shared Caddy snippet).
+
 ## [1.1.0] - 2026-11-04
 
 Security hardening round 2.
@@ -62,6 +88,7 @@ First versioned release. Production runs on Oracle Cloud at https://branchlab.te
 - Deprecated `X-XSS-Protection` header.
 - Routes for the retired lecture4 demo stack.
 
-[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Petya122/branchlab/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Petya122/branchlab/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Petya122/branchlab/releases/tag/v1.0.0

@@ -38,7 +38,7 @@ export const CommitModal: React.FC<CommitModalProps> = ({
             <GitCommit size={18} color="#38bdf8" />
             <span>Create New Commit</span>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -106,7 +106,7 @@ export const BranchModal: React.FC<BranchModalProps> = ({
             <GitBranch size={18} color="#a855f7" />
             <span>Create New Branch</span>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -185,7 +185,7 @@ export const MergeModal: React.FC<MergeModalProps> = ({
             <GitMerge size={18} color="#10b981" />
             <span>Merge Branches</span>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
