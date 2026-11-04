@@ -99,8 +99,8 @@ The production reverse proxy (Caddy) and the server's other services live in
 | **Type Integrity**  | `tsc -b`                       | Zero any, strict null checks, typed Git DAG and pipeline state machines    |
 | **Unit Tests**      | `vitest`                       | Git/pipeline engines, terminal command parser, hooks (`useGitSimulator`, `usePipelineSimulator`, `useTrophies`, …) |
 | **Integration Tests** | `@testing-library/react`     | The whole lab through the UI: terminal commands, git actions, pipeline + chaos, trophies, modals, StrictMode regression |
-| **Coverage**        | `@vitest/coverage-v8`          | ~83% lines; CI fails below the thresholds in `vite.config.ts`, report shown in the job summary |
-| **E2E Tests**       | **Playwright** (Chromium, desktop + mobile) | Real browser against the production Docker image: no console/CSP errors, no third-party requests, lab flows, security headers |
+| **Coverage**        | `@vitest/coverage-v8`          | ~93% lines; CI fails below the thresholds in `vite.config.ts`, report shown in the job summary |
+| **E2E Tests**       | **Playwright** (Chromium, desktop + mobile) | Real browser against the production Docker image: strict CSP (deny-by-default, no `unsafe-inline`) with zero violations, no third-party requests, lab flows, security headers |
 | **Lint**            | `oxlint`                       | React hooks rules and TypeScript lint, warnings fail the build             |
 | **Security**        | `npm audit` + **Trivy**        | Vulnerable npm dependencies and image (OS + library) CVEs                  |
 | **CI Automation**   | **GitHub Actions**             | Automated validation on every `push` and `pull_request` to `main`          |

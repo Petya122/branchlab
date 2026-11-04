@@ -9,7 +9,7 @@ import { usePipelineSimulator } from '../hooks/usePipelineSimulator'
 import { useGitSimulator } from '../hooks/useGitSimulator'
 import { resetTutorialSeen, shouldShowTutorial } from '../utils/tutorial'
 
-vi.mock('canvas-confetti', () => ({ default: vi.fn() }))
+vi.mock('../utils/celebrate', () => ({ celebrate: vi.fn() }))
 
 beforeEach(() => localStorage.clear())
 afterEach(() => vi.useRealTimers())

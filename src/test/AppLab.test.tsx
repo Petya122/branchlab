@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import App from '../App'
 import { getInitialGitState } from '../utils/gitEngine'
 
-vi.mock('canvas-confetti', () => ({ default: vi.fn() }))
+vi.mock('../utils/celebrate', () => ({ celebrate: vi.fn() }))
 
 /** Integration tests for the Interactive Lab: terminal, git actions, pipeline, trophies. */
 
@@ -202,5 +202,31 @@ describe('Lab modals', () => {
     localStorage.removeItem('branchlab_tutorial_seen')
     render(<App />)
     expect(screen.getByText(/step 1 of/i)).toBeInTheDocument()
+  })
+})
+
+describe('Modals opened after state changes', () => {
+  // Regression: modals used to keep the values from the first render
+  // (e.g. "branch off from" stayed on feature/auth after checking out main).
+  it('starts the Branch modal from the current active branch', () => {
+    renderLab()
+    runCommand('git checkout main')
+    fireEvent.click(screen.getAllByRole('button', { name: /^branch$/i })[0])
+    expect(screen.getByRole('combobox')).toHaveValue('main')
+  })
+
+  it('suggests a PR title for the current branch', () => {
+    renderLab()
+    runCommand('git checkout -b feature/payments')
+    fireEvent.click(screen.getByTitle(/simulate github pull request/i))
+    expect(screen.getByDisplayValue('feat: integrate feature/payments updates')).toBeInTheDocument()
+  })
+
+  it('offers newly created branches in the Merge modal', () => {
+    renderLab()
+    runCommand('git checkout -b feature/brand-new')
+    fireEvent.click(screen.getAllByRole('button', { name: /^merge$/i })[0])
+    const [source] = screen.getAllByRole('combobox')
+    expect(Array.from((source as HTMLSelectElement).options).map((o) => o.value)).toContain('feature/brand-new')
   })
 })

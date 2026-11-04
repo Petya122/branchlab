@@ -7,9 +7,31 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-04
+
+Strict Content-Security-Policy, modal tests and privacy.
+
 ### Changed
+- Content-Security-Policy is now deny-by-default (`default-src 'none'`) and no longer allows
+  `'unsafe-inline'` styles. Only same-origin scripts, styles, fonts, images and requests are allowed.
 - `Referrer-Policy` is now `no-referrer`: other sites (e.g. GitHub, when following a link)
   no longer learn that the visitor came from branchlab.tech.
+- `vite preview` sends the production security headers (read from `nginx/security-headers.conf`),
+  so local Playwright runs enforce the same CSP as production.
+- Coverage thresholds raised (now ~90% statements / ~93% lines, 108 tests).
+
+### Added
+- E2E test that walks through every modal and a confetti-firing pipeline run and fails on any CSP
+  violation reported by the browser.
+- Component tests for the Commit, Branch, Merge, Merge Conflict, Pull Request, Trophy Room and
+  Settings modals.
+
+### Fixed
+- The confetti library started a `blob:` Web Worker, which the CSP blocked. Confetti now renders
+  on the main thread (`useWorker: false`), so no CSP exception is needed.
+- The Branch, Merge and Pull Request modals kept the values from the first page render, e.g.
+  "Branch off from" stayed on `feature/auth` after `git checkout main`. Modals now mount only
+  while open and always start from the current lab state.
 
 ## [1.2.0] - 2026-11-04
 
@@ -92,7 +114,8 @@ First versioned release. Production runs on Oracle Cloud at https://branchlab.te
 - Deprecated `X-XSS-Protection` header.
 - Routes for the retired lecture4 demo stack.
 
-[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Petya122/branchlab/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Petya122/branchlab/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Petya122/branchlab/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Petya122/branchlab/releases/tag/v1.0.0
