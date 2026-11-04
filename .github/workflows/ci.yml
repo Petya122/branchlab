@@ -110,15 +110,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Runs the official multi-arch Trivy image (the trivy-action installer
+      # fails to download its binary on ARM64 runners).
       - name: 🔎 Trivy Vulnerability Scan
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: branchlab:scan
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: CRITICAL,HIGH
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            aquasec/trivy:0.70.0 image \
+              --exit-code 1 --ignore-unfixed \
+              --vuln-type os,library --severity CRITICAL,HIGH \
+              --format table branchlab:scan
 
       - name: 🔐 Log in to GHCR
         if: github.event_name != 'pull_request'
