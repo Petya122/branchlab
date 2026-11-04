@@ -22,6 +22,10 @@ FROM nginx:alpine
 LABEL org.opencontainers.image.source="https://github.com/Petya122/branchlab" \
       org.opencontainers.image.description="BranchLab - GitFlow & CI/CD pipeline simulator"
 
+# Pull in Alpine security fixes that are newer than the base image
+# (the Trivy gate in CI fails on fixable HIGH/CRITICAL vulnerabilities)
+RUN apk upgrade --no-cache
+
 # Nginx config + shared security headers snippet
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
