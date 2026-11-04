@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import type { Trophy } from './utils/trophies'
 import { SCENARIOS } from './utils/scenarios'
 import { celebrate } from './utils/celebrate'
@@ -9,7 +9,7 @@ import { useTerminalLog } from './hooks/useTerminalLog'
 import { useTrophies } from './hooks/useTrophies'
 import { usePipelineSimulator } from './hooks/usePipelineSimulator'
 import { useGitSimulator } from './hooks/useGitSimulator'
-import { useModals } from './hooks/useModals'
+import { useModals, type ModalId } from './hooks/useModals'
 import { AppNavbar, type AppView } from './components/AppNavbar'
 import { LabDashboard } from './components/LabDashboard'
 import { LabQuickActions } from './components/LabQuickActions'
@@ -61,7 +61,31 @@ export const App: React.FC = () => {
     log,
     triggerTrophy: trophies.triggerTrophy,
     onNewHead: pipeline.resetPipeline,
+    strictBranchProtection: settings.strictBranchProtection,
+    ciStatusFor: pipeline.statusFor,
   })
+
+  // A PR or a merge conflict needs a branch to integrate into another one
+  const { openModal, closeModal } = modals
+  const openLabModal = (id: ModalId) => {
+    if ((id === 'pr' || id === 'conflict') && !git.canIntegrate) {
+      log(
+        `[INFO] You are on '${git.gitState.activeBranch}', the integration target itself.`,
+        `Check out or create a feature/hotfix branch first (e.g. git checkout -b feature/my-change).`
+      )
+      return
+    }
+    openModal(id)
+  }
+
+  // Esc closes whichever modal is open
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeModal()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [closeModal])
 
   const runPipeline = () =>
     pipeline.runPipeline({
@@ -127,7 +151,7 @@ export const App: React.FC = () => {
         level={trophies.level}
         xp={trophies.trophyState.xp}
         isPipelineRunning={pipeline.isRunning}
-        onOpenModal={modals.openModal}
+        onOpenModal={openLabModal}
         onRunPipeline={runPipeline}
       />
 
@@ -160,7 +184,7 @@ export const App: React.FC = () => {
         <LabQuickActions
           variant="mobile"
           isPipelineRunning={pipeline.isRunning}
-          onOpenModal={modals.openModal}
+          onOpenModal={openLabModal}
           onRunPipeline={runPipeline}
         />
       )}
@@ -185,7 +209,7 @@ export const App: React.FC = () => {
         <MergeConflictModal
           isOpen
           sourceBranch={git.gitState.activeBranch}
-          targetBranch={git.conflictTarget}
+          targetBranch={git.integrationTarget}
           onClose={modals.closeModal}
           onResolve={git.resolveConflict}
         />
@@ -193,9 +217,11 @@ export const App: React.FC = () => {
       {modals.isOpen('pr') && (
         <PullRequestModal
           isOpen
+          prNumber={git.prNumber}
           sourceBranch={git.gitState.activeBranch}
-          targetBranch="main"
-          ciStatus={pipeline.pipelineRun.status}
+          targetBranch={git.integrationTarget}
+          // CI status of the PR branch's own head commit, not of the last run
+          ciStatus={git.ciStatusOfBranch(git.gitState.activeBranch)}
           onClose={modals.closeModal}
           onMergePR={git.mergePullRequest}
         />

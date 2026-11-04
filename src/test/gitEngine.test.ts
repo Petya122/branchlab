@@ -5,6 +5,9 @@ import {
   createBranch,
   checkoutBranch,
   mergeBranches,
+  squashMerge,
+  isAncestor,
+  integrationTarget,
 } from '../utils/gitEngine'
 
 describe('gitEngine', () => {
@@ -69,5 +72,53 @@ describe('gitEngine', () => {
     expect(mergeCommit.branch).toBe('develop')
     expect(nextState.activeBranch).toBe('develop')
     expect(nextState.branches['develop'].targetCommitId).toBe(mergeCommit.id)
+  })
+
+  // Regression: HEAD stayed on the previous branch's commit when the new
+  // branch was created from another base (e.g. a hotfix from main).
+  it('moves HEAD to the base commit when branching off another branch', () => {
+    const state = getInitialGitState('gitflow') // on feature/auth (c3)
+    const nextState = createBranch(state, 'hotfix/x', 'main')
+    expect(nextState.headCommitId).toBe(state.branches['main'].targetCommitId)
+    const { newCommit } = commitToActiveBranch(nextState, 'fix: patch')
+    expect(newCommit.parents).toEqual([state.branches['main'].targetCommitId])
+  })
+
+  it('refuses to merge a branch into itself', () => {
+    const state = getInitialGitState('gitflow')
+    expect(() => mergeBranches(state, 'develop', 'develop')).toThrow(/into itself/)
+  })
+
+  it('reports "Already up to date" instead of creating an empty merge commit', () => {
+    const state = getInitialGitState('gitflow')
+    const { nextState } = mergeBranches(state, 'feature/auth', 'develop')
+    expect(() => mergeBranches(nextState, 'feature/auth', 'develop')).toThrow(/Already up to date/)
+    // main (c1) is an ancestor of develop (c2)
+    expect(() => mergeBranches(state, 'main', 'develop')).toThrow(/Already up to date/)
+  })
+
+  it('squash-merges into one commit with a single parent', () => {
+    const state = getInitialGitState('github-flow')
+    const { nextState, squashCommit } = squashMerge(state, 'feature/status-page', 'main', 'feat: status page (#1)')
+    expect(squashCommit.parents).toEqual([state.branches['main'].targetCommitId])
+    expect(squashCommit.isMerge).toBeFalsy()
+    expect(nextState.branches['main'].targetCommitId).toBe(squashCommit.id)
+    // The feature branch is not part of main's history after a squash
+    expect(isAncestor(nextState, state.branches['feature/status-page'].targetCommitId, squashCommit.id)).toBe(false)
+  })
+
+  it('finds ancestors through merge parents', () => {
+    const state = getInitialGitState('gitflow')
+    const { nextState, mergeCommit } = mergeBranches(state, 'feature/auth', 'develop')
+    expect(isAncestor(nextState, 'c3', mergeCommit.id)).toBe(true)
+    expect(isAncestor(nextState, 'c1', mergeCommit.id)).toBe(true)
+    expect(isAncestor(nextState, mergeCommit.id, 'c1')).toBe(false)
+  })
+
+  it('picks the integration target per branching model', () => {
+    expect(integrationTarget(getInitialGitState('gitflow'))).toBe('develop') // feature/auth
+    expect(integrationTarget(getInitialGitState('github-flow'))).toBe('main') // no develop
+    const hotfix = createBranch(getInitialGitState('gitflow'), 'hotfix/x', 'main')
+    expect(integrationTarget(hotfix)).toBe('main')
   })
 })

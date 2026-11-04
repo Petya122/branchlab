@@ -205,6 +205,56 @@ describe('Lab modals', () => {
   })
 })
 
+describe('Simulator rules (regressions)', () => {
+  // A green run on feature/auth used to unlock a PR from develop after
+  // `git checkout develop`, because the PR read "the last run".
+  it('does not reuse a green CI run for another branch', async () => {
+    vi.useFakeTimers()
+    renderLab()
+    await runPipelineToEnd() // feature/auth passes
+    runCommand('git checkout develop')
+    fireEvent.click(screen.getByTitle(/simulate github pull request/i))
+    expect(screen.getByText(/ci pipeline not yet passed/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /confirm squash & merge/i })).toBeDisabled()
+  })
+
+  it('keeps the green status when switching back to the tested branch', async () => {
+    vi.useFakeTimers()
+    renderLab()
+    await runPipelineToEnd()
+    runCommand('git checkout develop')
+    runCommand('git checkout feature/auth')
+    fireEvent.click(screen.getByTitle(/simulate github pull request/i))
+    expect(screen.getByText(/all checks have passed/i)).toBeInTheDocument()
+    // GitFlow: feature branches are integrated into develop
+    expect(screen.getByText(/into/i).textContent).toContain('develop')
+  })
+
+  it('does not open a PR from the integration target itself', () => {
+    renderLab()
+    runCommand('git checkout main')
+    fireEvent.click(screen.getByTitle(/simulate github pull request/i))
+    expect(document.querySelector('.modal-overlay')).toBeNull()
+    expect(terminalLines().some((l) => l.startsWith("[INFO] You are on 'main'"))).toBe(true)
+  })
+
+  it('draws no empty develop lane in GitHub Flow', () => {
+    renderLab()
+    fireEvent.click(screen.getByRole('button', { name: /github flow/i }))
+    const lanes = Array.from(document.querySelectorAll('svg.canvas-svg text')).map((t) => t.textContent)
+    expect(lanes).toContain('main')
+    expect(lanes).not.toContain('develop')
+  })
+
+  it('closes the open modal with Escape', () => {
+    renderLab()
+    fireEvent.click(screen.getByTitle('Open DevOps Trophy Room'))
+    expect(document.querySelector('.modal-overlay')).not.toBeNull()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(document.querySelector('.modal-overlay')).toBeNull()
+  })
+})
+
 describe('Modals opened after state changes', () => {
   // Regression: modals used to keep the values from the first render
   // (e.g. "branch off from" stayed on feature/auth after checking out main).

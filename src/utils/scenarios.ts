@@ -19,7 +19,7 @@ export const SCENARIOS: Scenario[] = [
       'A critical vulnerability was discovered in production on branchlab.tech. You must branch off main, apply a hotfix commit, run CI/CD to verify green tests, and merge back to main.',
     objective: 'Create a branch named hotfix/patch, commit a fix, and merge it back to main.',
     initialModel: 'gitflow',
-    hint: 'Use [+ New Branch] from main, then make a commit, and finally click [🔀 Merge] into main.',
+    hint: 'Use [+ New Branch] from main, make a commit, run the pipeline (main is protected: it only accepts green commits), then click [🔀 Merge] into main.',
   },
   {
     id: 'ci-guardkeeper',
