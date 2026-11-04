@@ -16,11 +16,12 @@ export default defineConfig({
       exclude: ['src/test/**', 'src/main.tsx', 'src/types/**', 'src/**/*.d.ts'],
       reporter: ['text-summary', 'html', 'json-summary'],
       // CI fails if coverage drops below these floors (raise them as tests grow)
+      // (measured at v1.2.0: 82.5% statements, 74% branches, 72% functions, 83% lines)
       thresholds: {
-        lines: 0,
-        functions: 0,
-        branches: 0,
-        statements: 0,
+        statements: 78,
+        branches: 70,
+        functions: 65,
+        lines: 78,
       },
     },
   },
