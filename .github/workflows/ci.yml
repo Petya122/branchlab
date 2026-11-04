@@ -3,8 +3,15 @@ name: BranchLab CI/CD Pipeline
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/petya122/branchlab
 
 jobs:
   validate-and-build:
@@ -13,10 +20,10 @@ jobs:
 
     steps:
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ⚙️ Setup Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: 'npm'
@@ -25,30 +32,166 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm ci
 
-      - name: 🔍 TypeScript Strict Typecheck
+      - name: 🔍 Lint (oxlint)
+        run: npm run lint -- --deny-warnings
+
+      - name: 🧠 TypeScript Typecheck
         run: npm run typecheck
 
       - name: 🧪 Run Automated Tests (Vitest)
         run: npm run test:run
 
+      - name: 🛡️ Dependency Audit (npm audit)
+        run: npm audit --audit-level=high
+
       - name: 🚀 Build Production Bundle (Vite)
         run: npm run build
 
-  deploy:
-    name: 🚀 Deploy to Oracle Cloud
+      - name: 🧾 Validate Compose Files
+        run: |
+          cp infra/caddy/.env.example infra/caddy/.env
+          cp infra/arcane/.env.example infra/arcane/.env
+          docker compose -f docker-compose.yml config -q
+          docker compose -f infra/caddy/compose.yml config -q
+          docker compose -f infra/arcane/compose.yml config -q
+
+      - name: 🌐 Validate Caddyfile
+        run: |
+          HASH=$(docker run --rm caddy:2-alpine caddy hash-password --plaintext ci-only-dummy)
+          docker run --rm \
+            -e ARCANE_AUTH_USER=ci -e ARCANE_AUTH_HASH="$HASH" \
+            -v "$PWD/infra/caddy/conf:/etc/caddy:ro" \
+            caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+  docker-image:
+    name: Docker Image
     needs: validate-and-build
+    # Native ARM64 runner: the OCI server is an Ampere ARM64 VM
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      sha_tag: ${{ steps.vars.outputs.sha_tag }}
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: 🏷️ Compute Version Info
+        id: vars
+        run: |
+          echo "sha_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "app_version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+
+      - name: 🧰 Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: 🏷️ Docker Metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.vars.outputs.sha_tag }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🐳 Build Image (for scanning)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          tags: branchlab:scan
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            APP_VERSION=${{ steps.vars.outputs.app_version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🔎 Trivy Vulnerability Scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: branchlab:scan
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: 🔐 Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📤 Push Image to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            APP_VERSION=${{ steps.vars.outputs.app_version }}
+          cache-from: type=gha
+
+  deploy:
+    name: Deploy to Oracle Cloud
+    needs: docker-image
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: read
+    environment:
+      name: production
+      url: https://branchlab.tech
+    concurrency:
+      group: production
+      cancel-in-progress: false
 
     steps:
       - name: 🌐 Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          IMAGE_TAG: ${{ needs.docker-image.outputs.sha_tag }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          host: "${{ secrets.SSH_HOST }}"
-          username: "${{ secrets.SSH_USER }}"
-          key: "${{ secrets.SSH_PRIVATE_KEY }}"
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE_TAG,GHCR_USER,GHCR_TOKEN
           script: |
+            set -euo pipefail
             cd ~/branchlab
-            git pull origin main
-            docker compose build
-            docker compose up -d --force-recreate
+            # The server must mirror Git exactly: refuse to deploy over manual edits.
+            if ! git diff --quiet || ! git diff --cached --quiet; then
+              echo "Server checkout has uncommitted changes - commit them to Git instead:"
+              git status --short
+              exit 1
+            fi
+            git fetch --prune origin
+            git checkout -B main origin/main
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            trap 'docker logout ghcr.io >/dev/null' EXIT
+            bash infra/deploy.sh "$IMAGE_TAG"
+
+      - name: 🩺 Smoke Test (live version must match this commit)
+        run: |
+          for i in $(seq 1 10); do
+            if body=$(curl -fsS https://branchlab.tech/version.json) && echo "$body" | grep -q "$GITHUB_SHA"; then
+              echo "✅ Live: $body"
+              exit 0
+            fi
+            echo "Attempt $i: not live yet (${body:-no response})"
+            sleep 6
+          done
+          echo "::error::branchlab.tech is not serving commit $GITHUB_SHA"
+          exit 1

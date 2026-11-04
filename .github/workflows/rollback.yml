@@ -1,0 +1,63 @@
+name: Rollback / Redeploy
+
+# Manually redeploy any image that CI has already published to GHCR,
+# e.g. "sha-1a2b3c4" (a commit) or "1.0.0" (a release). No build happens.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (e.g. sha-1a2b3c4, 1.0.0, latest)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  rollback:
+    name: Deploy ${{ inputs.image_tag }}
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://branchlab.tech
+    concurrency:
+      group: production
+      cancel-in-progress: false
+
+    steps:
+      - name: 🔙 Deploy Tag via SSH
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE_TAG,GHCR_USER,GHCR_TOKEN
+          script: |
+            set -euo pipefail
+            cd ~/branchlab
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            trap 'docker logout ghcr.io >/dev/null' EXIT
+            bash infra/deploy.sh "$IMAGE_TAG"
+
+      - name: 🩺 Smoke Test
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          for i in $(seq 1 10); do
+            if body=$(curl -fsS https://branchlab.tech/version.json); then
+              # For sha-<short> tags, also check that exactly that commit is live
+              if [[ "$IMAGE_TAG" != sha-* ]] || echo "$body" | grep -q "\"commit\":\"${IMAGE_TAG#sha-}"; then
+                echo "✅ Live: $body"
+                exit 0
+              fi
+            fi
+            echo "Attempt $i: not live yet (${body:-no response})"
+            sleep 6
+          done
+          echo "::error::branchlab.tech is not serving $IMAGE_TAG"
+          exit 1

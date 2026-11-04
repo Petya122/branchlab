@@ -1,0 +1,31 @@
+# Arcane - Docker management UI, published only through Caddy
+# (https://arcane.branchlab.tech, behind basic auth). No host ports.
+#   docker compose -f infra/arcane/compose.yml up -d
+name: arcane
+
+services:
+  arcane:
+    image: ghcr.io/getarcaneapp/manager:latest
+    container_name: arcane
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - arcane-data:/app/data
+    env_file:
+      - .env
+    environment:
+      - APP_URL=${APP_URL:-https://arcane.branchlab.tech}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    labels:
+      - com.getarcaneapp.arcane.hidden=true
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  arcane-data:
+    name: arcane_arcane-data

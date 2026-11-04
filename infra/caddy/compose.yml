@@ -1,0 +1,36 @@
+# Shared edge proxy (Caddy) for the whole server.
+#   Start / update:  docker compose -f infra/caddy/compose.yml up -d
+#   Reload config:   docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+name: caddy
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    env_file:
+      - .env
+    volumes:
+      # Mount the directory, not the single file: `git pull` replaces the file,
+      # and a single-file bind mount would keep pointing at the old version.
+      - ./conf:/etc/caddy:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+
+volumes:
+  # Reuse the volumes of the previous setup so certificates are kept.
+  caddy_data:
+    name: branchlab_caddy_data
+  caddy_config:
+    name: branchlab_caddy_config
