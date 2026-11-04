@@ -34,6 +34,23 @@ async function runCommand(page: Page, cmd: string) {
 
 const terminal = (page: Page) => page.locator('.terminal-body')
 
+/**
+ * Records every Content-Security-Policy violation the browser reports
+ * (blocked inline styles, scripts, fonts, images...) into window.__cspViolations.
+ */
+async function recordCspViolations(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __cspViolations: string[] }
+    w.__cspViolations = []
+    document.addEventListener('securitypolicyviolation', (e) => {
+      w.__cspViolations.push(`${e.violatedDirective} blocked ${e.blockedURI || 'inline'} (${e.sourceFile}:${e.lineNumber})`)
+    })
+  })
+}
+
+const cspViolations = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __cspViolations: string[] }).__cspViolations)
+
 test.describe('Homepage', () => {
   test('loads without console errors or CSP violations', async ({ page }) => {
     const errors = watchForErrors(page)
@@ -123,15 +140,58 @@ test.describe('Interactive Lab', () => {
   })
 })
 
+test.describe('Content Security Policy', () => {
+  // vite preview sends the same headers as nginx (see vite.config.ts), so these
+  // run both locally and against the production image in CI.
+
+  test('is strict: deny by default, no unsafe-inline or unsafe-eval', async ({ request }) => {
+    const csp = (await request.get('/')).headers()['content-security-policy'] ?? ''
+    expect(csp).toContain("default-src 'none'")
+    expect(csp).toContain("frame-ancestors 'self'")
+    expect(csp).not.toContain('unsafe-inline')
+    expect(csp).not.toContain('unsafe-eval')
+  })
+
+  test('nothing in the app violates it', async ({ page }) => {
+    const errors = watchForErrors(page)
+    await recordCspViolations(page)
+    await openLab(page)
+
+    // Exercise every view that renders inline styles, SVG, canvas or modals
+    for (const title of [
+      'Simulate GitHub Pull Request & Branch Protection',
+      'Simulate Interactive Git Merge Conflict',
+      'Open DevOps Trophy Room',
+      'Open Settings',
+      'Open Guided Tutorial Tour',
+    ]) {
+      const button = page.getByTitle(title)
+      if (await button.isVisible()) {
+        await button.click()
+        await expect(page.locator('.modal-overlay')).toBeVisible()
+        await page.locator('.modal-overlay').click({ position: { x: 5, y: 5 } })
+      }
+    }
+    // A passing pipeline fires canvas-confetti
+    await runCommand(page, 'run pipeline')
+    await expect(terminal(page)).toContainText('All checks passed', { timeout: 15_000 })
+    await page.getByRole('button', { name: 'Home', exact: true }).click()
+    await page.waitForLoadState('networkidle')
+
+    expect(await cspViolations(page)).toEqual([])
+    expect(errors).toEqual([])
+  })
+})
+
 test.describe('Production server', () => {
-  // Only meaningful against the real nginx image (vite preview sends no such headers)
+  // Only meaningful against the real nginx image (version.json, nginx headers)
   test.skip(!process.env.E2E_EXPECT_HEADERS, 'set E2E_EXPECT_HEADERS=1 when testing the Docker image')
 
   test('sends the security headers', async ({ request }) => {
     const res = await request.get('/')
     expect(res.status()).toBe(200)
     const h = res.headers()
-    expect(h['content-security-policy']).toContain("default-src 'self'")
+    expect(h['content-security-policy']).toContain("default-src 'none'")
     expect(h['x-frame-options']).toBe('SAMEORIGIN')
     expect(h['x-content-type-options']).toBe('nosniff')
     expect(h['referrer-policy']).toBe('no-referrer')

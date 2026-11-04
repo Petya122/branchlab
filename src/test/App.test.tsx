@@ -3,10 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import App from '../App'
 
-// Mock canvas-confetti
-vi.mock('canvas-confetti', () => ({
-  default: vi.fn(),
-}))
+// Confetti needs a real canvas; not available in jsdom
+vi.mock('../utils/celebrate', () => ({ celebrate: vi.fn() }))
 
 describe('App Component', () => {
   it('renders the header with BranchLab and the branchlab.tech domain badge', () => {
