@@ -175,7 +175,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
               </div>
             </div>
           </div>
-          <button
+          <button aria-label="Close"
             onClick={onClose}
             style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
           >

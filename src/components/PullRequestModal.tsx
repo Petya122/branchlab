@@ -75,7 +75,7 @@ export const PullRequestModal: React.FC<PullRequestModalProps> = ({
               style={{ marginTop: '8px', fontSize: '15px', fontWeight: '600' }}
             />
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
