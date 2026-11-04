@@ -6,14 +6,26 @@
 # Changes here are deployed by CI: the deploy job pulls the repo and runs
 # `caddy reload`. Never edit this file directly on the server.
 
-# Shared response headers for every site
-(security) {
+# Shared response headers
+(security_headers) {
 	header {
 		# Browsers must use HTTPS for this domain and its subdomains for a year
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		# Don't advertise server software
 		-Server
 		-Via
+	}
+}
+
+# Imported by every site. Error responses (e.g. the basic-auth 401 prompt or a
+# 502 when an upstream is down) skip the normal `header` handler, so they get
+# the same headers through handle_errors. WWW-Authenticate is preserved, so the
+# browser's password prompt still appears.
+(security) {
+	import security_headers
+	handle_errors {
+		import security_headers
+		respond "{err.status_code} {err.status_text}" {err.status_code}
 	}
 }
 
