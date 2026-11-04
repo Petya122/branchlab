@@ -1,46 +1,27 @@
+# BranchLab application.
+# The reverse proxy (Caddy) lives in infra/caddy and reaches this container
+# over the shared external "proxy" network, so no host ports are published.
+#
+# Production: CI builds the image and the server only pulls it.
+#   IMAGE_TAG is written to .env by the deploy job (e.g. IMAGE_TAG=sha-1a2b3c4).
+# Local:      docker network create proxy   (once)
+#             docker compose up -d --build
+
 services:
   branchlab:
-    image: branchlab:latest
+    image: ghcr.io/petya122/branchlab:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
     container_name: branchlab_app
     restart: unless-stopped
-    ports:
-      - "5000:80"
-    expose:
-      - "80"
     labels:
       - com.getarcaneapp.arcane.updater=false
       - com.getarcaneapp.arcane.update-check=false
     networks:
-      - webnet
-
-  caddy:
-    image: caddy:2-alpine
-    container_name: branchlab_caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    labels:
-      - com.getarcaneapp.arcane.updater=false
-    networks:
-      - webnet
-      - nginx-proxy-network
-    depends_on:
-      - branchlab
+      - proxy
 
 networks:
-  webnet:
-    driver: bridge
-  nginx-proxy-network:
+  proxy:
+    name: proxy
     external: true
-
-volumes:
-  caddy_data:
-  caddy_config:

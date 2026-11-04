@@ -428,14 +428,14 @@ export const App: React.FC = () => {
     }
 
     // git checkout -b <branch>
-    const checkoutNewMatch = cmd.match(/^git checkout -b ([a-zA-Z0-9_\-\/]+)$/i)
+    const checkoutNewMatch = cmd.match(/^git checkout -b ([a-zA-Z0-9_\-/]+)$/i)
     if (checkoutNewMatch) {
       handleCreateBranch(checkoutNewMatch[1], gitState.activeBranch)
       return
     }
 
     // git checkout <branch>
-    const checkoutMatch = cmd.match(/^git checkout ([a-zA-Z0-9_\-\/]+)$/i)
+    const checkoutMatch = cmd.match(/^git checkout ([a-zA-Z0-9_\-/]+)$/i)
     if (checkoutMatch) {
       const branchName = checkoutMatch[1]
       try {
@@ -450,7 +450,7 @@ export const App: React.FC = () => {
     }
 
     // git merge <source>
-    const mergeMatch = cmd.match(/^git merge ([a-zA-Z0-9_\-\/]+)$/i)
+    const mergeMatch = cmd.match(/^git merge ([a-zA-Z0-9_\-/]+)$/i)
     if (mergeMatch) {
       handleMerge(mergeMatch[1], gitState.activeBranch)
       return

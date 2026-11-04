@@ -1,0 +1,26 @@
+# Edge reverse proxy for every site on the branchlab.tech server.
+# Caddy obtains and renews the Let's Encrypt certificates automatically
+# and redirects HTTP -> HTTPS. Upstreams are reached by container name
+# over the shared "proxy" Docker network.
+#
+# Changes here are deployed by CI: the deploy job pulls the repo and runs
+# `caddy reload`. Never edit this file directly on the server.
+
+branchlab.tech, www.branchlab.tech {
+	encode zstd gzip
+	reverse_proxy branchlab:80
+}
+
+# Arcane (Docker management UI) has full control over the Docker socket,
+# so it gets an extra password layer in front of its own login.
+# ARCANE_AUTH_USER / ARCANE_AUTH_HASH come from infra/caddy/.env (server only).
+arcane.branchlab.tech {
+	basic_auth {
+		{$ARCANE_AUTH_USER} {$ARCANE_AUTH_HASH}
+	}
+	reverse_proxy arcane:3552
+}
+
+codeblue.branchlab.tech {
+	reverse_proxy codeblue-backend:3001
+}

@@ -38,7 +38,8 @@
 - **Testing:** Vitest + React Testing Library + `@testing-library/jest-dom`
 - **Icons & Effects:** `lucide-react`, `canvas-confetti`
 - **CI/CD Automation:** GitHub Actions (`.github/workflows/ci.yml`)
-- **Hosting & DNS:** Oracle Cloud Infrastructure (OCI) Linux VM (Ampere ARM64) with Nginx on `branchlab.tech`
+- **Container Registry:** GitHub Container Registry (`ghcr.io/petya122/branchlab`)
+- **Hosting & DNS:** Oracle Cloud Infrastructure (OCI) Linux VM (Ampere ARM64): Caddy (automatic HTTPS) in front of an Nginx container on `branchlab.tech`
 
 ---
 
@@ -74,12 +75,18 @@ npm run build
 ### 5. Run with Docker & Docker Compose
 
 ```bash
-# Build and run with automated HTTPS
+# One-time: the shared network that Caddy and the apps use
+docker network create proxy
+
+# Build and run the app container locally (served on the proxy network)
 docker compose up -d --build
 
 # View container logs
 docker compose logs -f
 ```
+
+The production reverse proxy (Caddy) and the server's other services live in
+[`infra/`](infra/README.md).
 
 ---
 
@@ -90,5 +97,51 @@ docker compose logs -f
 | **Type Integrity**  | `tsc -b`                       | Zero any, strict null checks, typed Git DAG and pipeline state machines    |
 | **Unit Tests**      | `vitest`                       | State reducers for commits, branches, DAG parents, and CI stage evaluators |
 | **Component Tests** | `@testing-library/react`       | Visualizer rendering, model switcher, modal actions, chaos toggles         |
+| **Lint**            | `oxlint`                       | React hooks rules and TypeScript lint, warnings fail the build             |
+| **Security**        | `npm audit` + **Trivy**        | Vulnerable npm dependencies and image (OS + library) CVEs                  |
 | **CI Automation**   | **GitHub Actions**             | Automated validation on every `push` and `pull_request` to `main`          |
-| **Deployment**      | **Oracle Cloud (OCI) + Nginx** | Dedicated cloud VM deployment with edge SSL on `branchlab.tech`            |
+| **Deployment**      | **GHCR + OCI + Caddy**         | Versioned ARM64 image, health-checked deploy, smoke test on `branchlab.tech` |
+
+---
+
+## 🏗️ Architecture & Delivery Pipeline
+
+```mermaid
+flowchart LR
+    dev[Feature branch] -->|pull request| pr{"CI checks<br/>Lint, Test & Build<br/>Docker Image + Trivy"}
+    pr -->|green: squash merge| main[main]
+    main --> build[Build ARM64 image]
+    build -->|push sha-xxxxxxx, latest| ghcr[(GHCR)]
+    ghcr --> deploy[Deploy job: SSH]
+    deploy --> vm
+
+    subgraph vm[OCI VM - Oracle Linux, ARM64]
+        caddy[Caddy :80/:443<br/>automatic HTTPS] -->|proxy network| app[branchlab_app<br/>Nginx + static build]
+        caddy --> arcane[Arcane<br/>basic auth]
+        caddy --> codeblue[codeblue-backend]
+    end
+
+    user((Browser)) -->|https://branchlab.tech| caddy
+```
+
+### Branch workflow
+
+`main` is protected by a GitHub ruleset: no direct pushes, no force pushes, and every change
+arrives through a pull request whose **Lint, Test & Build** and **Docker Image** checks are green.
+
+```bash
+git switch -c feat/my-change
+# ...commit using Conventional Commits (feat:, fix:, chore:, ci:)...
+git push -u origin feat/my-change
+# open a PR, wait for green checks, squash-merge -> automatic deploy
+```
+
+### Deploy, verify, roll back
+
+| Step | What happens |
+| :--- | :--- |
+| Merge to `main` | CI builds the image on a native ARM64 runner, scans it with Trivy and pushes it to GHCR as `sha-<short>` and `latest` |
+| Deploy | The server checks out `main`, pulls exactly that image and waits until the container is **healthy** (`docker compose up --wait`), then reloads Caddy |
+| Smoke test | CI fetches `https://branchlab.tech/version.json` and checks that the live commit equals the merged one |
+| Release | Push a tag `vX.Y.Z` to publish the image as `X.Y.Z`. Update [`CHANGELOG.md`](CHANGELOG.md) first |
+| Roll back | **Actions → Rollback / Redeploy → Run workflow** with a tag like `sha-1a2b3c4` or `1.0.0` |
