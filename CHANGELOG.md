@@ -30,6 +30,8 @@ Testing and maintainability.
 ### Fixed
 - In development (React StrictMode), unlocked achievements and chaos toggles were logged twice
   because side effects ran inside state updaters.
+- Caddy error responses (Arcane's basic-auth 401 prompt, 502 pages) now also send HSTS and no
+  `Server` header (`handle_errors` in the shared Caddy snippet).
 
 ## [1.1.0] - 2026-11-04
 
