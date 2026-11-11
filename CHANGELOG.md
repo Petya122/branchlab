@@ -7,6 +7,23 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-11
+
+### Fixed
+- The `apk upgrade` layer of the Docker image was reused from the CI build cache, so the image kept
+  `libxslt 1.1.43-r3` with two HIGH CVEs (CVE-2026-87636, CVE-2026-9947) although Alpine already
+  shipped the fix. Trivy then blocked the merges of the Dependabot updates. CI now passes a value
+  that changes every run (`APK_CACHE_BUST`), so the security update always runs; the image has
+  `libxslt 1.1.43-r4` and Trivy reports 0 HIGH/CRITICAL findings.
+
+### Changed
+- Trivy 0.70.0 → 0.76.2 (`--vuln-type` → `--pkg-types`).
+- Weekly scheduled CI run (Mondays 06:00 UTC, also startable by hand): builds, scans and tests `main`
+  so newly published CVEs show up without waiting for the next merge. Scheduled runs never push or
+  deploy; images are pushed on `push` events only.
+- Caddy 2.11.9 also in the CI Caddyfile check and `set-user.sh`, matching the Dependabot bump.
+- Includes the merged Dependabot updates: Caddy 2.11.7 → 2.11.9, `@vitejs/plugin-react` 6.1.2 → 6.2.1.
+
 ## [1.5.0] - 2026-11-04
 
 Simulator correctness: the lab now follows its own Git and branch-protection rules.
@@ -157,7 +174,8 @@ First versioned release. Production runs on Oracle Cloud at https://branchlab.te
 - Deprecated `X-XSS-Protection` header.
 - Routes for the retired lecture4 demo stack.
 
-[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/Petya122/branchlab/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/Petya122/branchlab/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/Petya122/branchlab/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Petya122/branchlab/compare/v1.2.0...v1.3.0

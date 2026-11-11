@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 TINYAUTH_IMAGE=ghcr.io/tinyauthapp/tinyauth:v5.2.0
-CADDY_IMAGE=caddy:2.11.7-alpine
+CADDY_IMAGE=caddy:2.11.9-alpine
 
 read -rp "Username: " user
 [[ "$user" =~ ^[A-Za-z0-9._@-]+$ ]] || { echo "Use letters, digits and . _ @ - only." >&2; exit 1; }
