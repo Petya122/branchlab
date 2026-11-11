@@ -12,6 +12,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:mutation": "python scripts/mutation-check.py",
     "typecheck": "tsc -b"
   },
   "dependencies": {

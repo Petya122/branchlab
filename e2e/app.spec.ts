@@ -51,97 +51,76 @@ async function recordCspViolations(page: Page) {
 const cspViolations = (page: Page) =>
   page.evaluate(() => (window as unknown as { __cspViolations: string[] }).__cspViolations)
 
+/**
+ * WHY E2E: only a real browser shows real layout, real fonts, real CSP
+ * enforcement and the real nginx headers. Logic is tested much faster in
+ * Vitest, so these tests cover what jsdom cannot: the page works end to end
+ * for a visitor, on desktop and on a phone.
+ */
+
 test.describe('Homepage', () => {
-  test('loads without console errors or CSP violations', async ({ page }) => {
+  test('loads without console errors', async ({ page }) => {
     const errors = watchForErrors(page)
     await skipTour(page)
     await page.goto('/')
     await expect(page).toHaveTitle(/BranchLab/)
-    await expect(page.getByRole('button', { name: /launch interactive lab/i })).toBeVisible()
     await page.waitForLoadState('networkidle')
     expect(errors).toEqual([])
   })
 
-  test('loads every resource from its own origin (no Google Fonts, no trackers)', async ({ page, baseURL }) => {
+  // Privacy (GDPR): no Google Fonts, CDNs or trackers; the font must still load
+  test('loads everything from its own origin, including the self-hosted font', async ({ page, baseURL }) => {
     const external: string[] = []
     page.on('request', (req) => {
       const url = new URL(req.url())
-      if (url.protocol.startsWith('http') && url.origin !== new URL(baseURL!).origin) {
-        external.push(req.url())
-      }
+      if (url.protocol.startsWith('http') && url.origin !== new URL(baseURL!).origin) external.push(req.url())
     })
     await skipTour(page)
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    expect(external).toEqual([])
-  })
-
-  test('uses the self-hosted Inter font', async ({ page }) => {
-    await skipTour(page)
-    await page.goto('/')
     await page.evaluate(() => document.fonts.ready)
-    const loaded = await page.evaluate(() =>
-      [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family)
-    )
-    expect(loaded).toContain('Inter Variable')
+    const fonts = await page.evaluate(() => [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family))
+    expect(external).toEqual([])
+    expect(fonts).toContain('Inter Variable')
   })
 
-  test('shows the onboarding tour on the first visit and closes it', async ({ page }) => {
+  test('first visit shows the tour; the hero button then opens the lab', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByText(/step 1 of/i)).toBeVisible()
     await page.getByRole('button', { name: 'Close' }).first().click()
     await expect(page.getByText(/step 1 of/i)).toBeHidden()
-  })
-
-  test('opens the lab from the hero button', async ({ page }) => {
-    await skipTour(page)
-    await page.goto('/')
-    await page.getByRole('button', { name: /launch interactive lab/i }).first().click()
+    await page.getByRole('button', { name: /launch interactive lab/i }).click()
     await expect(page.getByText('Git Branching Visualizer')).toBeVisible()
   })
 })
 
 test.describe('Interactive Lab', () => {
-  test('creates a branch and a commit from the terminal', async ({ page }) => {
-    await openLab(page)
-    await runCommand(page, 'git checkout -b feature/playwright')
-    await expect(page.getByText(/commits • active:/)).toContainText('active: feature/playwright')
+  // The core story of the app, in a real browser: a red pipeline blocks the
+  // pull request, fixing it makes the pipeline green, and the PR can merge.
+  test('quality gate journey: red CI blocks the PR, green CI lets it merge', async ({ page }) => {
+    await openLab(page) // GitFlow, on feature/auth
+    const prButton = page.getByRole('button', { name: /^PR$/ }).last()
+    const confirm = page.getByRole('button', { name: /confirm squash & merge/i })
 
-    await runCommand(page, 'git commit -m "test: e2e commit"')
-    await expect(terminal(page)).toContainText('test: e2e commit')
-  })
-
-  test('runs the CI/CD pipeline to success', async ({ page }) => {
-    await openLab(page)
-    await runCommand(page, 'run pipeline')
-    await expect(terminal(page)).toContainText('All checks passed', { timeout: 15_000 })
-  })
-
-  test('chaos injection makes the pipeline fail', async ({ page }) => {
-    await openLab(page)
-    await page.getByRole('button', { name: /tests pass/i }).click()
+    await page.getByRole('button', { name: /tests pass/i }).click() // inject a failing test
     await runCommand(page, 'run pipeline')
     await expect(terminal(page)).toContainText('Pipeline terminated with errors', { timeout: 15_000 })
+    await prButton.click()
+    await expect(confirm).toBeDisabled()
+    await page.keyboard.press('Escape')
+
+    await page.getByRole('button', { name: /tests fail/i }).click() // fix it
+    await runCommand(page, 'run pipeline')
+    await expect(terminal(page)).toContainText('All checks passed', { timeout: 15_000 })
+    await prButton.click()
+    await confirm.click()
+    await expect(terminal(page)).toContainText('squash-merged into develop')
+    await expect(page.getByText(/commits • active:/)).toContainText('active: develop')
   })
 
-  test('switching to Trunk-Based unlocks a trophy', async ({ page }) => {
-    await openLab(page)
-    await page.getByRole('button', { name: /trunk-based/i }).click()
-    await expect(terminal(page)).toContainText('ACHIEVEMENT UNLOCKED')
-    await expect(page.getByTitle('Open DevOps Trophy Room')).toContainText(/• [1-9][0-9]* XP/)
-  })
-
-  test('quick actions are reachable on this screen size', async ({ page, isMobile }) => {
-    await openLab(page)
-    const actions = isMobile ? page.locator('.mobile-action-bar') : page.locator('.desktop-actions')
-    await expect(actions).toBeVisible()
-    await actions.getByRole('button', { name: /commit/i }).click()
-    await expect(page.getByText('Create New Commit')).toBeVisible()
-  })
-
-  // Regression: at 1280px the PR / Conflict / Run CI/CD buttons were pushed off-screen,
-  // and on phones the action dock only appeared at the very end of the page.
-  test('every quick action is inside the screen without scrolling', async ({ page, isMobile }) => {
+  // Regression: at 1280px the PR / Conflict / Run CI/CD buttons were pushed
+  // off-screen, and on phones the action dock only appeared at the page end.
+  test('every quick action is fully on screen and works', async ({ page, isMobile }) => {
     if (!isMobile) await page.setViewportSize({ width: 1280, height: 800 })
     await openLab(page)
     const actions = isMobile ? page.locator('.mobile-action-bar') : page.locator('.desktop-actions')
@@ -149,6 +128,8 @@ test.describe('Interactive Lab', () => {
       await expect(button).toBeInViewport({ ratio: 1 })
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0)
+    await actions.getByRole('button', { name: /commit/i }).click()
+    await expect(page.getByText('Create New Commit')).toBeVisible()
   })
 })
 
