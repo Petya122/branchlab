@@ -3,6 +3,7 @@ import type { PipelineFailureConfig, PipelineRun } from '../types/pipeline'
 import type { SettingsState } from '../utils/settings'
 import {
   createInitialPipelineRun,
+  deploysFrom,
   generateStageLogs,
   shouldStageFail,
 } from '../utils/pipelineEngine'
@@ -14,6 +15,8 @@ export interface PipelineSimulatorDeps {
   /** Visual celebration (confetti) when a run passes. */
   onPassed: () => void
   animationSpeed: SettingsState['animationSpeed']
+  /** Chaos toggles active from the start (e.g. the challenge shown on load). */
+  initialChaos?: Partial<PipelineFailureConfig>
 }
 
 export interface PipelineTarget {
@@ -28,7 +31,7 @@ const STAGE_DELAY_MS: Record<SettingsState['animationSpeed'], number> = {
   relaxed: 650,
 }
 
-const NO_CHAOS: PipelineFailureConfig = {
+export const NO_CHAOS: PipelineFailureConfig = {
   failLint: false,
   failTests: false,
   failSecurity: false,
@@ -45,7 +48,9 @@ export function usePipelineSimulator(initialRun: PipelineTarget, deps: PipelineS
   )
   const [selectedStageId, setSelectedStageId] = useState<string | null>('lint')
   const [isRunning, setIsRunning] = useState(false)
-  const [chaosConfig, setChaosConfig] = useState<PipelineFailureConfig>(NO_CHAOS)
+  const [chaosConfig, setChaosConfig] = useState<PipelineFailureConfig>(() => ({ ...NO_CHAOS, ...deps.initialChaos }))
+  // The Quality Gatekeeper trophy is for turning a red pipeline green
+  const sawFailureRef = useRef(false)
   // CI result per commit hash, like GitHub's commit status checks. The PR
   // gate looks up the head commit of the PR's branch here, so a green run on
   // another branch can't be reused after switching branches.
@@ -63,6 +68,11 @@ export function usePipelineSimulator(initialRun: PipelineTarget, deps: PipelineS
   /** Shows a fresh, not-yet-run pipeline for a new head commit. */
   const resetPipeline = useCallback((hash: string, message: string, branch: string) => {
     setPipelineRun(createInitialPipelineRun(hash, message, branch))
+  }, [])
+
+  /** Replaces all chaos toggles at once (used when a challenge is loaded). */
+  const applyChaos = useCallback((config: Partial<PipelineFailureConfig>) => {
+    setChaosConfig({ ...NO_CHAOS, ...config })
   }, [])
 
   const toggleChaos = (key: keyof PipelineFailureConfig) => {
@@ -95,8 +105,10 @@ export function usePipelineSimulator(initialRun: PipelineTarget, deps: PipelineS
       const fails = shouldStageFail(stage.id, chaosConfig)
       const stageLogs = generateStageLogs(stage.id, !fails, branch, commitHash)
       stage.logs = stageLogs
-      stage.durationMs = 380 + Math.floor(Math.random() * 150)
-      stage.status = fails ? 'failed' : 'success'
+      // Like the real workflow: the deploy job is skipped for anything but main
+      const skipped = stage.id === 'deploy' && !deploysFrom(branch)
+      stage.durationMs = skipped ? 0 : 380 + Math.floor(Math.random() * 150)
+      stage.status = fails ? 'failed' : skipped ? 'skipped' : 'success'
       log(...stageLogs)
 
       if (fails) {
@@ -109,6 +121,7 @@ export function usePipelineSimulator(initialRun: PipelineTarget, deps: PipelineS
     }
 
     if (failed) {
+      sawFailureRef.current = true
       recordResult(commitHash, 'failed')
       log(`[CI/CD RESULT] Pipeline terminated with errors. Deployment aborted. ❌`)
     } else {
@@ -116,11 +129,12 @@ export function usePipelineSimulator(initialRun: PipelineTarget, deps: PipelineS
       setPipelineRun({ ...run, stages: [...stages] })
       recordResult(commitHash, 'passed')
       log(
-        branch === 'main'
+        deploysFrom(branch)
           ? `[CI/CD RESULT] All checks passed! Production release live on https://branchlab.tech ✨`
-          : `[CI/CD RESULT] All checks passed on '${branch}' ✨ Preview deployed; merge to main to release.`
+          : `[CI/CD RESULT] All checks passed on '${branch}' ✨ Deploy skipped: merge to main to release.`
       )
-      triggerTrophy('quality-gatekeeper')
+      // Only for fixing a red pipeline, as the trophy's description says
+      if (sawFailureRef.current) triggerTrophy('quality-gatekeeper')
       onPassed()
     }
 
@@ -135,6 +149,7 @@ export function usePipelineSimulator(initialRun: PipelineTarget, deps: PipelineS
     isRunning,
     chaosConfig,
     toggleChaos,
+    applyChaos,
     resetPipeline,
     runPipeline,
     statusFor,

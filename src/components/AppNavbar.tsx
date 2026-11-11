@@ -55,7 +55,16 @@ export const AppNavbar: React.FC<AppNavbarProps> = ({
       <div
         className="brand-logo"
         style={{ cursor: 'pointer' }}
+        role="button"
+        tabIndex={0}
+        aria-label="Go to homepage"
         onClick={() => onNavigate('home')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onNavigate('home')
+          }
+        }}
         title="Go to Homepage"
       >
         <Layers size={22} />
@@ -152,6 +161,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = ({
         style={{ padding: '7px 10px' }}
         onClick={() => onOpenModal('settings')}
         title="Open Settings"
+        aria-label="Open Settings"
       >
         <SettingsIcon size={15} color="var(--text-secondary)" />
       </button>

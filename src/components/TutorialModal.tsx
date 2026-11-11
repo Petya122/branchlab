@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   CheckCircle2,
 } from 'lucide-react'
+import { setTutorialSeen, shouldShowTutorial } from '../utils/tutorial'
 
 interface TutorialModalProps {
   isOpen: boolean
@@ -29,7 +30,13 @@ interface TutorialStep {
 
 export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0)
-  const [dontShowAgain, setDontShowAgain] = useState(false)
+  // Saved as soon as it is ticked, so it also counts when the tour is closed
+  // with ✕, Esc or a click outside (not only with "Skip tour" / the last step)
+  const [dontShowAgain, setDontShowAgain] = useState(() => !shouldShowTutorial())
+  const toggleDontShowAgain = (checked: boolean) => {
+    setDontShowAgain(checked)
+    setTutorialSeen(checked)
+  }
 
   if (!isOpen) return null
 
@@ -47,7 +54,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
         'Simulate a full 5-stage CI/CD release pipeline with real-time logs.',
         'Practice resolving 3-way Git merge conflicts and branch protection rules.',
       ],
-      proTip: 'Target Domain: branchlab.tech — Deployed automatically using GitHub Actions & Cloud Hosting!',
+      proTip: 'Live on branchlab.tech: every merge to main is tested and deployed automatically by GitHub Actions to a Docker server on Oracle Cloud.',
     },
     {
       stepNumber: 2,
@@ -58,9 +65,9 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
       icon: <GitBranch size={28} color="#a855f7" />,
       accentColor: '#a855f7',
       bullets: [
-        'Click [+ Commit] to generate a new commit node on the active branch.',
-        'Click [Branch] to spawn feature/ or hotfix/ branches.',
-        'Click [Merge] to simulate merging branches and watch parent pointers update.',
+        'Click [Commit] to add a new commit to the active branch.',
+        'Click [Branch] to create feature/ or hotfix/ branches from any branch.',
+        'Click [Merge] to merge branches and watch the merge commit get two parents.',
       ],
       proTip: 'Click on any commit circle on the canvas to inspect its author, SHA hash, and commit message!',
     },
@@ -69,15 +76,15 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
       badge: 'Module 2: CI/CD Pipeline',
       title: 'Automated Build Gates & Chaos Injection',
       description:
-        'In DevOps, every commit triggers automated verification. BranchLab executes 5 stages: Lint & Style, Unit Tests (Vitest), SAST Security Audit, Vite Build, and Cloud Deploy (Docker).',
+        'In DevOps, every commit triggers automated verification. BranchLab mirrors its own GitHub Actions pipeline in 5 stages: Lint & Typecheck, Tests (Vitest), Security Scan (npm audit + Trivy), Docker Image & E2E, and Deploy to Oracle Cloud (main only).',
       icon: <Play size={28} color="#10b981" />,
       accentColor: '#10b981',
       bullets: [
-        'Click [Run CI/CD] to watch stages execute sequentially with real logs.',
+        'Click [Run CI/CD] (on phones: Trigger Pipeline) to watch the stages run one after another.',
         'Use Chaos Injection Controls to simulate broken unit tests or lint errors.',
-        'Observe how branch protection halts deployment when checks turn red ❌.',
+        'A red stage stops the pipeline ❌, and only main is deployed; other branches skip the deploy.',
       ],
-      proTip: 'Fix a red pipeline by toggling off the chaos error, and earn the Quality Gatekeeper achievement!',
+      proTip: 'Turn a red pipeline green by switching the chaos error off again, and earn the Quality Gatekeeper achievement!',
     },
     {
       stepNumber: 4,
@@ -88,8 +95,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
       icon: <GitPullRequest size={28} color="#ec4899" />,
       accentColor: '#ec4899',
       bullets: [
-        'Click [Pull Request] to simulate opening a GitHub PR with branch protection.',
-        'PR merging is blocked when tests fail — require green status checks before merge.',
+        'Click [PR] to open a simulated GitHub pull request (feature branches target develop in GitFlow, main otherwise).',
+        'Merging is blocked until the pipeline is green on the PR branch’s own latest commit.',
         'Click [Conflict] to resolve code conflicts using standard Git diff markers (<<<<<<< HEAD).',
       ],
       proTip: 'Choose between Accept Current, Accept Incoming, or Accept Both to resolve conflicts cleanly.',
@@ -113,12 +120,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
 
   const step = steps[currentStep]
 
-  const handleFinish = () => {
-    if (dontShowAgain) {
-      localStorage.setItem('branchlab_tutorial_seen', 'true')
-    }
-    onClose()
-  }
+  const handleFinish = () => onClose()
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -274,7 +276,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
             <input
               type="checkbox"
               checked={dontShowAgain}
-              onChange={(e) => setDontShowAgain(e.target.checked)}
+              onChange={(e) => toggleDontShowAgain(e.target.checked)}
             />
             Don't show this guide automatically on startup
           </label>

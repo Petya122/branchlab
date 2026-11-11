@@ -48,7 +48,10 @@ html, body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   min-height: 100vh;
+  /* `clip`, not `hidden`: hidden turns body into a scroll container, which
+     breaks `position: sticky` (the phone action dock would not stick). */
   overflow-x: hidden;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -194,6 +197,21 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* The navbar holds brand, view/model switchers, controls and (in the lab) the
+   quick actions. On anything narrower than a very wide screen they don't fit
+   in one row: wrap the quick actions onto a second, right-aligned row instead
+   of pushing PR / Conflict / Run CI/CD off-screen. */
+.navbar {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+.nav-actions.desktop-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .action-btn {
@@ -829,6 +847,12 @@ body {
   .nav-selectors-strip .model-selector {
     flex-shrink: 0 !important;
   }
+
+  /* Row 3 (tablets, 769-992px): quick actions below the switchers */
+  .nav-actions.desktop-actions {
+    order: 4;
+    width: 100%;
+  }
 }
 
 /* Phone Breakpoint (<= 768px) */
@@ -1014,3 +1038,16 @@ body {
   }
 }
 
+
+/* Keyboard focus for the clickable non-button elements (stage cards, commit dots, logo) */
+.stage-card:focus-visible,
+.brand-logo:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+.canvas-svg g[role='button']:focus-visible {
+  outline: none;
+}
+.canvas-svg g[role='button']:focus-visible circle {
+  stroke: #38bdf8;
+}

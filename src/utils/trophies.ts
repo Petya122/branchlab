@@ -19,7 +19,7 @@ export const INITIAL_TROPHIES: Trophy[] = [
     id: 'quality-gatekeeper',
     title: 'Quality Gatekeeper',
     badge: 'CI Defender',
-    description: 'Diagnose a failing CI/CD pipeline and achieve 100% green tests.',
+    description: 'Turn a failing (red) CI/CD pipeline green again.',
     xp: 50,
     icon: 'ShieldCheck',
   },
@@ -51,7 +51,7 @@ export const INITIAL_TROPHIES: Trophy[] = [
     id: 'trunk-pioneer',
     title: 'Trunk Pioneer',
     badge: 'Fast Delivery',
-    description: 'Switch to Trunk-Based development and integrate short-lived branches.',
+    description: 'Switch to Trunk-Based Development, where everyone integrates into main in small steps.',
     xp: 50,
     icon: 'Zap',
   },
@@ -113,44 +113,48 @@ export function awardTrophy(
 export interface LevelInfo {
   level: number
   rank: string
+  /** XP earned inside the current level */
   currentXp: number
+  /** XP the current level spans (0 at the top level) */
   nextLevelXp: number
+  /** XP still missing to reach the next level (0 at the top level) */
+  xpToNextLevel: number
   progressPct: number
+  isMaxLevel: boolean
 }
 
+const LEVELS = [
+  { level: 1, rank: 'Junior DevOps Apprentice', from: 0 },
+  { level: 2, rank: 'CI/CD Pipeline Engineer', from: 100 },
+  { level: 3, rank: 'GitFlow Strategist', from: 200 },
+  // Reached with every trophy: 50 + 100 + 75 + 50 + 50 = 325 XP
+  { level: 4, rank: 'Principal SRE Architect', from: 325 },
+]
+
 export function calculateDevOpsLevel(xp: number): LevelInfo {
-  if (xp < 100) {
+  const index = LEVELS.findLastIndex((l) => xp >= l.from)
+  const current = LEVELS[Math.max(index, 0)]
+  const next = LEVELS[index + 1]
+  if (!next) {
     return {
-      level: 1,
-      rank: 'Junior DevOps Apprentice',
-      currentXp: xp,
-      nextLevelXp: 100,
-      progressPct: Math.min(100, (xp / 100) * 100),
+      level: current.level,
+      rank: current.rank,
+      currentXp: xp - current.from,
+      nextLevelXp: 0,
+      xpToNextLevel: 0,
+      progressPct: 100,
+      isMaxLevel: true,
     }
   }
-  if (xp < 200) {
-    return {
-      level: 2,
-      rank: 'CI/CD Pipeline Engineer',
-      currentXp: xp - 100,
-      nextLevelXp: 100,
-      progressPct: Math.min(100, ((xp - 100) / 100) * 100),
-    }
-  }
-  if (xp < 325) {
-    return {
-      level: 3,
-      rank: 'GitFlow Strategist',
-      currentXp: xp - 200,
-      nextLevelXp: 125,
-      progressPct: Math.min(100, ((xp - 200) / 125) * 100),
-    }
-  }
+  const span = next.from - current.from
+  const inLevel = xp - current.from
   return {
-    level: 4,
-    rank: 'Principal SRE Architect',
-    currentXp: xp - 325,
-    nextLevelXp: 150,
-    progressPct: 100,
+    level: current.level,
+    rank: current.rank,
+    currentXp: inLevel,
+    nextLevelXp: span,
+    xpToNextLevel: span - inLevel,
+    progressPct: Math.min(100, (inLevel / span) * 100),
+    isMaxLevel: false,
   }
 }

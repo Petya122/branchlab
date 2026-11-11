@@ -8,6 +8,7 @@ import {
   getInitialGitState,
   integrationTarget,
   mergeBranches,
+  onelineLog,
   squashMerge,
 } from '../utils/gitEngine'
 import { errorLine, type LogFn } from './useTerminalLog'
@@ -24,6 +25,14 @@ export interface GitSimulatorDeps {
 }
 
 export type ConflictStrategy = 'current' | 'incoming' | 'both'
+
+/**
+ * `echo: false` when the action comes from the terminal: the terminal already
+ * printed the typed command, so the action must not print a `$ git ...` line again.
+ */
+export interface ActionOptions {
+  echo?: boolean
+}
 
 /** First PR number shown in the simulator; each merged PR takes the next one. */
 const FIRST_PR_NUMBER = 24
@@ -78,7 +87,7 @@ export function useGitSimulator(initialModel: BranchingModel, deps: GitSimulator
     if (newModel === 'trunk-based') triggerTrophy('trunk-pioneer')
   }
 
-  const commit = (message: string) => {
+  const commit = (message: string, { echo = true }: ActionOptions = {}) => {
     if (isProtected(gitState.activeBranch)) {
       log(
         `[BRANCH PROTECTION] Direct commits to '${gitState.activeBranch}' are blocked.`,
@@ -89,14 +98,14 @@ export function useGitSimulator(initialModel: BranchingModel, deps: GitSimulator
     const { nextState, newCommit } = commitToActiveBranch(gitState, message)
     setGitState(nextState)
     setSelectedCommit(newCommit)
-    log(`$ git commit -m "${message}"`, `[${newCommit.branch} ${newCommit.hash}] ${message}`)
+    log(...(echo ? [`$ git commit -m "${message}"`] : []), `[${newCommit.branch} ${newCommit.hash}] ${message}`)
     onNewHead(newCommit.hash, newCommit.message, newCommit.branch)
   }
 
-  const createNewBranch = (branchName: string, fromBranch: string) => {
+  const createNewBranch = (branchName: string, fromBranch: string, { echo = true }: ActionOptions = {}) => {
     try {
       setGitState(createBranch(gitState, branchName, fromBranch))
-      log(`$ git checkout -b ${branchName} ${fromBranch}`, `Switched to a new branch '${branchName}'`)
+      log(...(echo ? [`$ git checkout -b ${branchName} ${fromBranch}`] : []), `Switched to a new branch '${branchName}'`)
     } catch (err: unknown) {
       log(errorLine(err))
     }
@@ -111,7 +120,7 @@ export function useGitSimulator(initialModel: BranchingModel, deps: GitSimulator
     }
   }
 
-  const merge = (source: string, targetBranch: string) => {
+  const merge = (source: string, targetBranch: string, { echo = true }: ActionOptions = {}) => {
     const blocked = protectionError(source, targetBranch)
     if (blocked) return log(blocked)
     try {
@@ -119,9 +128,8 @@ export function useGitSimulator(initialModel: BranchingModel, deps: GitSimulator
       setGitState(nextState)
       setSelectedCommit(mergeCommit)
       log(
-        `$ git checkout ${targetBranch}`,
-        `$ git merge --no-ff ${source}`,
-        `Merged branch '${source}' into ${targetBranch} [${mergeCommit.hash}]`
+        ...(echo ? [`$ git checkout ${targetBranch}`, `$ git merge --no-ff ${source}`] : []),
+        `Merged branch '${source}' into ${targetBranch} [${mergeCommit.hash}] (merge commit with 2 parents)`
       )
       onNewHead(mergeCommit.hash, mergeCommit.message, mergeCommit.branch)
       if (source.startsWith('hotfix/') && targetBranch === 'main') triggerTrophy('hotfix-firefighter')
@@ -170,6 +178,23 @@ export function useGitSimulator(initialModel: BranchingModel, deps: GitSimulator
     }
   }
 
+  /** Output of `git status`. */
+  const statusLines = (): string[] => [
+    `On branch ${gitState.activeBranch}`,
+    headCommit ? `HEAD is at ${headCommit.hash} ${headCommit.message}` : 'No commits yet',
+    `CI on this commit: ${headCommit ? ciStatusFor(headCommit.hash) : 'idle'}`,
+    isProtected(gitState.activeBranch)
+      ? `'${gitState.activeBranch}' is protected: no direct commits, changes arrive via merge/PR with green CI.`
+      : `Integrates into: ${target}`,
+  ]
+
+  /** Output of `git log --oneline`. */
+  const logLines = (): string[] => onelineLog(gitState)
+
+  /** Output of `git branch`. */
+  const branchLines = (): string[] =>
+    Object.keys(gitState.branches).map((name) => `${name === gitState.activeBranch ? '*' : ' '} ${name}`)
+
   return {
     model,
     gitState,
@@ -180,6 +205,9 @@ export function useGitSimulator(initialModel: BranchingModel, deps: GitSimulator
     canIntegrate,
     prNumber,
     ciStatusOfBranch,
+    statusLines,
+    logLines,
+    branchLines,
     changeModel,
     commit,
     createBranch: createNewBranch,

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import type { Trophy } from './utils/trophies'
-import { SCENARIOS } from './utils/scenarios'
+import { SCENARIOS, firstScenarioIndexFor } from './utils/scenarios'
+import { getInitialGitState } from './utils/gitEngine'
+import type { BranchingModel } from './types/git'
 import { celebrate } from './utils/celebrate'
 import { loadSettings, saveSettings, type SettingsState } from './utils/settings'
 import { HELP_LINES, parseTerminalCommand } from './utils/terminalCommands'
@@ -21,25 +23,29 @@ import { TrophyRoomModal } from './components/TrophyRoomModal'
 import { TutorialModal } from './components/TutorialModal'
 import { SettingsModal } from './components/SettingsModal'
 
-const INITIAL_LOGS = [
-  '$ git status',
-  'On branch feature/auth',
-  'Your branch is up to date with origin/feature/auth.',
-  'System ready. Select a model or run pipeline checks.',
-]
-
-const INITIAL_PIPELINE = {
-  commitHash: '5d88e2b',
-  commitMessage: 'feat(auth): implement student sso oauth flow',
-  branch: 'feature/auth',
+/** Startup terminal text and pipeline target, from the model the lab starts with. */
+function initialLab(model: BranchingModel) {
+  const state = getInitialGitState(model)
+  const head = state.commits.find((c) => c.id === state.headCommitId)!
+  return {
+    logs: [
+      '$ git status',
+      `On branch ${state.activeBranch}`,
+      `Your branch is up to date with 'origin/${state.activeBranch}'.`,
+      'System ready. Type help, use the buttons, or run the pipeline.',
+    ],
+    pipeline: { commitHash: head.hash, commitMessage: head.message, branch: state.activeBranch },
+  }
 }
 
 export const App: React.FC = () => {
   const [view, setView] = useState<AppView>('home')
   const [settings, setSettings] = useState<SettingsState>(loadSettings)
-  const [scenarioIndex, setScenarioIndex] = useState(0)
+  const [start] = useState(() => initialLab(settings.defaultModel))
+  // Start with a challenge that matches the default branching model from Settings
+  const [scenarioIndex, setScenarioIndex] = useState(() => firstScenarioIndexFor(settings.defaultModel))
   const modals = useModals(shouldShowTutorial() ? 'tutorial' : null)
-  const { logs, log, clear } = useTerminalLog(INITIAL_LOGS)
+  const { logs, log, clear } = useTerminalLog(start.logs)
 
   const onTrophyUnlocked = useCallback(
     (trophy: Trophy) => {
@@ -50,11 +56,12 @@ export const App: React.FC = () => {
   )
   const trophies = useTrophies(onTrophyUnlocked)
 
-  const pipeline = usePipelineSimulator(INITIAL_PIPELINE, {
+  const pipeline = usePipelineSimulator(start.pipeline, {
     log,
     triggerTrophy: trophies.triggerTrophy,
     onPassed: () => celebrate({ particleCount: 60, spread: 60, origin: { y: 0.7 } }),
     animationSpeed: settings.animationSpeed,
+    initialChaos: SCENARIOS[scenarioIndex].chaos,
   })
 
   const git = useGitSimulator(settings.defaultModel, {
@@ -105,19 +112,20 @@ export const App: React.FC = () => {
       case 'run-pipeline':
         return void runPipeline()
       case 'status':
-        return log(
-          `On branch ${git.gitState.activeBranch}`,
-          `Head commit: ${git.gitState.headCommitId}`,
-          `Total commits in graph: ${git.gitState.commits.length}`
-        )
+        return log(...git.statusLines())
+      case 'log':
+        return log(...git.logLines())
+      case 'list-branches':
+        return log(...git.branchLines())
+      // The typed command is already echoed above, so the actions skip their own `$ git ...` line
       case 'commit':
-        return git.commit(cmd.message)
+        return git.commit(cmd.message, { echo: false })
       case 'create-branch':
-        return git.createBranch(cmd.branch, git.gitState.activeBranch)
+        return git.createBranch(cmd.branch, git.gitState.activeBranch, { echo: false })
       case 'checkout':
         return git.checkout(cmd.branch)
       case 'merge':
-        return git.merge(cmd.source, git.gitState.activeBranch)
+        return git.merge(cmd.source, git.gitState.activeBranch, { echo: false })
       case 'unknown':
         return log(`Command not recognized: "${cmd.input}". Type 'help' for available commands.`)
     }
@@ -128,7 +136,13 @@ export const App: React.FC = () => {
     const scenario = SCENARIOS[nextIndex]
     setScenarioIndex(nextIndex)
     git.changeModel(scenario.initialModel)
+    // Each challenge starts from its own pipeline state (e.g. a failing test)
+    pipeline.applyChaos(scenario.chaos ?? {})
     log(`\n🎯 Loaded Challenge: ${scenario.title}`, `Objective: ${scenario.objective}`)
+    if (scenario.chaos) {
+      const injected = Object.keys(scenario.chaos).join(', ')
+      log(`[CHAOS CONTROL] Challenge setup: ${injected} ENABLED (Will Fail)`)
+    }
   }
 
   const handleUpdateSettings = (next: SettingsState) => {

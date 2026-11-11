@@ -64,7 +64,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleClearCache = () => {
     if (
       confirm(
-        'Are you sure you want to clear all browser cache and reset BranchLab to factory defaults? All settings, trophies, and tour history will be reset.'
+        'Delete all BranchLab data saved in this browser and start over? Settings, trophies, XP and the tour choice will be reset.'
       )
     ) {
       try {
@@ -101,7 +101,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 BranchLab Settings
               </div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                Configure simulation rules, visuals, and browser storage
+                Changes are saved automatically in this browser
               </div>
             </div>
           </div>
@@ -147,7 +147,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }}
           >
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              Require 100% green CI/CD pipeline checks before Pull Request merges
+              No direct commits to main; merges into main need a green pipeline on the source branch
             </div>
             <button
               type="button"
@@ -163,6 +163,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="form-group">
           <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <GitBranch size={14} color="#a855f7" /> Default Branching Strategy
+            <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(used the next time the lab loads)</span>
           </label>
           <select
             className="form-input"
@@ -198,10 +199,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               type="button"
               className="action-btn btn-ghost"
               style={{ fontSize: '11px', padding: '6px 12px' }}
-              onClick={() => {
-                onResetTour()
-                alert('Onboarding tour reset! It will show again on next startup or when clicking Tour.')
-              }}
+              onClick={onResetTour}
+              title="Opens the tour now, and again on the next visit"
             >
               <RotateCcw size={13} color="#f59e0b" /> Reset Tour
             </button>
@@ -223,7 +222,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               style={{ fontSize: '11px', padding: '6px 12px', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.35)' }}
               onClick={handleClearCache}
             >
-              <Trash2 size={13} color="#ef4444" /> Clear Cache & Reset
+              <Trash2 size={13} color="#ef4444" /> Clear Saved Data & Reset
             </button>
           </div>
         </div>

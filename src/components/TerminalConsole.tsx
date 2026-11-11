@@ -32,13 +32,20 @@ export const TerminalConsole: React.FC<TerminalConsoleProps> = ({
   }
 
   const getLogClass = (line: string) => {
-    if (line.includes('[FAILED]') || line.includes('[ERROR]') || line.includes('❌') || line.includes('FAIL')) {
+    if (
+      line.includes('[FAILED]') ||
+      line.includes('[ERROR]') ||
+      line.includes('[BRANCH PROTECTION]') ||
+      line.includes('[CONFLICT]') ||
+      line.includes('❌') ||
+      line.includes('FAIL')
+    ) {
       return 'log-error'
     }
     if (line.includes('[SUCCESS]') || line.includes('PASS') || line.includes('✅') || line.includes('🚀')) {
       return 'log-success'
     }
-    if (line.startsWith('$') || line.includes('[CI]') || line.includes('[VITEST]') || line.includes('[CLOUD]') || line.includes('[DOCKER]')) {
+    if (line.startsWith('$') || line.includes('[CI]') || line.includes('[VITEST]') || line.includes('[CLOUD]') || line.includes('[DOCKER]') || line.includes('[TRIVY]') || line.includes('[E2E]')) {
       return 'log-command'
     }
     return 'log-info'
@@ -94,7 +101,7 @@ export const TerminalConsole: React.FC<TerminalConsoleProps> = ({
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <TerminalIcon size={12} /> branchlab-cli • zsh
           </span>
-          <span>v1.0.0</span>
+          <span>v{__APP_VERSION__}</span>
         </div>
 
         <div className="terminal-body" ref={bodyRef}>
@@ -113,6 +120,7 @@ export const TerminalConsole: React.FC<TerminalConsoleProps> = ({
           <input
             type="text"
             className="terminal-input"
+            aria-label="Terminal command"
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             placeholder="git commit -m 'feat: ...' or git checkout main"

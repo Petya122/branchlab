@@ -33,7 +33,9 @@ export const GitCanvas: React.FC<GitCanvasProps> = ({
   const nodePositions: Record<string, NodePosition> = {}
   const LANE_HEIGHT = 65
   const STEP_WIDTH = 90
-  const PADDING_X = 60
+  // Room on the left for the lane labels, so the first commit's tag badge
+  // (e.g. v0.1.0 on main) does not cover the "main" label
+  const PADDING_X = 110
   const PADDING_Y = 50
 
   state.commits.forEach((commit, index) => {
@@ -159,7 +161,17 @@ export const GitCanvas: React.FC<GitCanvasProps> = ({
               <g
                 key={`node-${commit.id}`}
                 style={{ cursor: 'pointer' }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Commit ${commit.hash} on ${commit.branch}: ${commit.message}`}
+                aria-pressed={isSelected}
                 onClick={() => onSelectCommit(commit)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onSelectCommit(commit)
+                  }
+                }}
               >
                 {/* Selection halo */}
                 {isSelected && (

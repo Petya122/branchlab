@@ -81,7 +81,7 @@ describe('usePipelineSimulator', () => {
     return { ...hook, deps }
   }
 
-  it('passes every stage and awards the quality trophy', async () => {
+  it('passes every stage on main, including the deploy', async () => {
     vi.useFakeTimers()
     const { result, deps } = setup()
     await act(async () => {
@@ -91,7 +91,8 @@ describe('usePipelineSimulator', () => {
     })
     expect(result.current.pipelineRun.status).toBe('passed')
     expect(result.current.pipelineRun.stages.every((s) => s.status === 'success')).toBe(true)
-    expect(deps.triggerTrophy).toHaveBeenCalledWith('quality-gatekeeper')
+    // A first green run is not a "fix", so no Quality Gatekeeper trophy yet
+    expect(deps.triggerTrophy).not.toHaveBeenCalled()
     expect(deps.onPassed).toHaveBeenCalledTimes(1)
     expect(result.current.isRunning).toBe(false)
   })
@@ -318,7 +319,8 @@ describe('usePipelineSimulator results per commit', () => {
     expect(result.current.statusFor('aaa1111')).toBe('passed')
     expect(result.current.statusFor('bbb2222')).toBe('idle')
     expect(deps.log.mock.calls.flat().map(String)).toContain(
-      "[CI/CD RESULT] All checks passed on 'feature/x' ✨ Preview deployed; merge to main to release."
+      "[CI/CD RESULT] All checks passed on 'feature/x' ✨ Deploy skipped: merge to main to release."
     )
+    expect(result.current.pipelineRun.stages.find((s) => s.id === 'deploy')?.status).toBe('skipped')
   })
 })
