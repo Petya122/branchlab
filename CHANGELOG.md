@@ -7,6 +7,20 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Changed
+- **Test suite reviewed for meaning.** Each test must fail when something a user cares about
+  breaks and stay green on refactoring. About 60 tests that only checked static text, callback
+  wiring, fixture data or implementation details (or duplicated a stronger test) were removed.
+  The rest were reorganised by the risk they protect, each file with a `WHY:` comment:
+  162 → 102 Vitest tests, 15 → 10 Playwright tests. Line coverage only went from ~93% to ~91%.
+- New Playwright journey: a red pipeline blocks the pull request, a green one lets it merge.
+- Added boundary-value tests for levels and a corrupted-localStorage test.
+
+### Added
+- `TESTING.md`: testing strategy, the tests worth showing, and what was removed and why.
+- `scripts/mutation-check.py` (`npm run test:mutation`): injects 10 realistic bugs one by one;
+  the suite catches 10/10.
+
 ## [1.6.0] - 2026-11-11
 
 Full site review: layout, logic and content consistency.

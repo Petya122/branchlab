@@ -96,13 +96,16 @@ The production reverse proxy (Caddy) and the server's other services live in
 
 ## 🧪 DevOps & Testing Architecture
 
+What we test and **why** (and what we deliberately don't): see **[TESTING.md](TESTING.md)**.
+
 | Test Level          | Tool                           | Scope                                                                      |
 | :------------------ | :----------------------------- | :------------------------------------------------------------------------- |
 | **Type Integrity**  | `tsc -b`                       | Zero any, strict null checks, typed Git DAG and pipeline state machines    |
-| **Unit Tests**      | `vitest`                       | Git/pipeline engines, terminal command parser, hooks (`useGitSimulator`, `usePipelineSimulator`, `useTrophies`, …) |
-| **Integration Tests** | `@testing-library/react`     | The whole lab through the UI: terminal commands, git actions, pipeline + chaos, trophies, modals, StrictMode regression |
-| **Coverage**        | `@vitest/coverage-v8`          | ~93% lines; CI fails below the thresholds in `vite.config.ts`, report shown in the job summary |
-| **E2E Tests**       | **Playwright** (Chromium, desktop + mobile) | Real browser against the production Docker image: strict CSP (deny-by-default, no `unsafe-inline`) with zero violations, no third-party requests, lab flows, security headers |
+| **Unit Tests**      | `vitest`                       | Git engine rules, terminal parser, level boundaries; team rules and the pipeline in the hooks |
+| **Integration Tests** | `@testing-library/react`     | The whole lab driven like a student: CI quality gate, branch protection, dialogs; mostly regression tests of real bugs |
+| **Coverage**        | `@vitest/coverage-v8`          | ~91% lines; CI fails below the thresholds in `vite.config.ts`, report shown in the job summary |
+| **Mutation check**  | `python scripts/mutation-check.py` | Injects 10 realistic bugs one by one; the suite must catch all of them (10/10) |
+| **E2E Tests**       | **Playwright** (Chromium, desktop + mobile) | Real browser against the production Docker image: the quality-gate journey (red CI blocks the PR, green merges it), layout at 1280px and on phones, zero CSP violations, no third-party requests, security headers |
 | **Lint**            | `oxlint`                       | React hooks rules and TypeScript lint, warnings fail the build             |
 | **Security**        | `npm audit` + **Trivy**        | Vulnerable npm dependencies and image (OS + library) CVEs                  |
 | **CI Automation**   | **GitHub Actions**             | Automated validation on every `push` and `pull_request` to `main`          |
