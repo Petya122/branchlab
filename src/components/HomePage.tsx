@@ -151,7 +151,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <Zap size={14} color="#38bdf8" /> React 19 + TypeScript
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <CheckCircle2 size={14} color="#34d399" /> 24+ Automated Vitest Tests
+            <CheckCircle2 size={14} color="#34d399" /> Vitest + Playwright Tested
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <Globe size={14} color="#a855f7" /> Live on branchlab.tech
@@ -216,7 +216,8 @@ export const HomePage: React.FC<HomePageProps> = ({
           {/* Living SVG Canvas */}
           <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <div style={{ width: '100%', minWidth: '700px', height: '245px', position: 'relative' }}>
-              <svg viewBox="0 0 900 245" style={{ width: '100%', height: '100%' }}>
+              {/* display:block: an inline SVG leaves a few px of text-baseline space, which made the box scroll */}
+              <svg viewBox="0 0 900 245" style={{ width: '100%', height: '100%', display: 'block' }} aria-hidden="true">
               <defs>
                 {/* Fixed Linear Gradients with userSpaceOnUse for robust cross-browser rendering */}
                 <linearGradient id="mainRail" gradientUnits="userSpaceOnUse" x1="50" y1="55" x2="840" y2="55">
@@ -341,10 +342,11 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* 5. STATIC COMMITS (Each in its own vertical lane without overlap) */}
               {[
                 { cx: 90, cy: 55, color: '#10b981', sha: 'v0.9.0' },
-                { cx: 270, cy: 125, color: '#06b6d4', sha: '4d5e6f' },
-                { cx: 460, cy: 195, color: '#a855f7', sha: '7g8h9i' },
-                { cx: 530, cy: 195, color: '#a855f7', sha: '0j1k2l' },
-                { cx: 610, cy: 125, color: '#06b6d4', sha: '3m4n5o', isMerge: true },
+                // Short SHAs are 7 hexadecimal characters (0-9, a-f), like in `git log --oneline`
+                { cx: 270, cy: 125, color: '#06b6d4', sha: '4d5e6f1' },
+                { cx: 460, cy: 195, color: '#a855f7', sha: '7a8b9c2' },
+                { cx: 530, cy: 195, color: '#a855f7', sha: '0d1e2f3' },
+                { cx: 610, cy: 125, color: '#06b6d4', sha: '3a4b5c6', isMerge: true },
                 { cx: 810, cy: 55, color: '#10b981', sha: 'deploy', isMerge: true },
               ].map((node, idx) => (
                 <g key={`hero-node-${idx}`}>
@@ -544,7 +546,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <GithubIcon /> Petya122/branchlab
           </a>
         </div>
-        <div>Continuous Deployment verified with Vitest & Cloud Infrastructure.</div>
+        <div>Every change is tested (Vitest, Playwright, Trivy) and deployed automatically with GitHub Actions to Oracle Cloud.</div>
       </footer>
     </div>
   )

@@ -70,7 +70,7 @@ describe('SettingsModal Component', () => {
     expect(handleClose).toHaveBeenCalledTimes(1)
   })
 
-  it('renders the Clear Cache & Reset button', () => {
+  it('renders the Clear Saved Data & Reset button', () => {
     render(
       <SettingsModal
         isOpen={true}
@@ -84,6 +84,6 @@ describe('SettingsModal Component', () => {
       />
     )
 
-    expect(screen.getByRole('button', { name: /clear cache & reset/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /clear saved data & reset/i })).toBeInTheDocument()
   })
 })

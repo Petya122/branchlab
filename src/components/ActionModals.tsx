@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import type { GitGraphState } from '../types/git'
 import { X, GitBranch, GitCommit, GitMerge } from 'lucide-react'
+import { validateBranchName } from '../utils/gitEngine'
 
 interface ModalProps {
   isOpen: boolean
@@ -90,9 +91,16 @@ export const BranchModal: React.FC<BranchModalProps> = ({
 
   if (!isOpen) return null
 
+  const trimmed = name.trim()
+  const nameError = !trimmed
+    ? null
+    : state.branches[trimmed]
+      ? `Branch '${trimmed}' already exists.`
+      : validateBranchName(trimmed)
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
+    if (!trimmed || nameError) return
     onCreateBranch(name.trim(), fromBranch)
     setName('')
     onClose()
@@ -133,16 +141,23 @@ export const BranchModal: React.FC<BranchModalProps> = ({
               className="form-input"
               autoFocus
               placeholder="feature/payment or hotfix/patch"
+              aria-label="New branch name"
+              aria-invalid={Boolean(nameError)}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+            {nameError && (
+              <p role="alert" style={{ color: '#ef4444', fontSize: 12, marginTop: 6 }}>
+                {nameError}
+              </p>
+            )}
           </div>
 
           <div className="modal-actions">
             <button type="button" className="action-btn btn-ghost" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="action-btn btn-primary" disabled={!name.trim()}>
+            <button type="submit" className="action-btn btn-primary" disabled={!trimmed || Boolean(nameError)}>
               Create Branch
             </button>
           </div>

@@ -9,6 +9,16 @@ export function shouldShowTutorial(): boolean {
   }
 }
 
+/** Remember (or forget) the "don't show this guide on startup" choice. */
+export function setTutorialSeen(seen: boolean): void {
+  try {
+    if (seen) localStorage.setItem(TUTORIAL_SEEN_KEY, 'true')
+    else localStorage.removeItem(TUTORIAL_SEEN_KEY)
+  } catch {
+    // Storage blocked: the choice only lasts for this visit
+  }
+}
+
 /** Forget the "don't show again" choice so the tour opens again. */
 export function resetTutorialSeen(): void {
   try {

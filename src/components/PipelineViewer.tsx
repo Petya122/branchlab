@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Clock,
   ExternalLink,
+  MinusCircle,
 } from 'lucide-react'
 
 interface PipelineViewerProps {
@@ -59,6 +60,8 @@ export const PipelineViewer: React.FC<PipelineViewerProps> = ({
         return <XCircle size={16} color="#f87171" />
       case 'running':
         return <Loader2 size={16} color="#38bdf8" className="spin" />
+      case 'skipped':
+        return <MinusCircle size={16} color="#64748b" aria-label="skipped" />
       default:
         return <Clock size={16} color="#64748b" />
     }
@@ -104,7 +107,17 @@ export const PipelineViewer: React.FC<PipelineViewerProps> = ({
               className={`stage-card ${stage.status === 'running' ? 'stage-running' : ''} ${
                 isSelected ? 'selected' : ''
               }`}
+              role="button"
+              tabIndex={0}
+              aria-pressed={isSelected}
+              aria-label={`${stage.name}: ${stage.status}`}
               onClick={() => onSelectStage(stage)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onSelectStage(stage)
+                }
+              }}
             >
               <div className="stage-left">
                 <div
@@ -132,6 +145,7 @@ export const PipelineViewer: React.FC<PipelineViewerProps> = ({
                 {stage.durationMs > 0 && (
                   <span className="stage-duration">{stage.durationMs}ms</span>
                 )}
+                {stage.status === 'skipped' && <span className="stage-duration">skipped</span>}
                 {getStatusIcon(stage.status)}
               </div>
             </div>

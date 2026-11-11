@@ -15,9 +15,17 @@ function productionHeaders(): Record<string, string> {
   return headers
 }
 
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+  version: string
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Shown in the lab terminal header, so it always matches the release
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+  },
   preview: {
     headers: productionHeaders(),
   },

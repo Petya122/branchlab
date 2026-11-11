@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="alternate icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#06090e" />
     <meta name="description" content="BranchLab - Interactive GitFlow, Trunk-Based Branching, and CI/CD Pipeline Simulator for DevOps & Testing" />
@@ -12,13 +12,21 @@
     <!-- OpenGraph Social Sharing -->
     <meta property="og:title" content="BranchLab — GitFlow & CI/CD Pipeline Simulator" />
     <meta property="og:description" content="Master Git branching strategies and test automated CI/CD release pipelines interactively." />
-    <meta property="og:image" content="/logo.png" />
-    <meta property="og:url" content="https://branchlab.tech" />
+    <!-- Link previews need an absolute image URL -->
+    <meta property="og:image" content="https://branchlab.tech/logo.png" />
+    <meta property="og:image:width" content="256" />
+    <meta property="og:image:height" content="256" />
+    <meta property="og:image:alt" content="BranchLab logo: a glowing branching tree" />
+    <meta property="og:url" content="https://branchlab.tech/" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BranchLab" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="canonical" href="https://branchlab.tech/" />
 
     <title>BranchLab — GitFlow & CI/CD Pipeline Simulator | branchlab.tech</title>
   </head>
   <body>
+    <noscript>BranchLab is an interactive simulator and needs JavaScript enabled.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

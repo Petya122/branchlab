@@ -21,13 +21,15 @@
    - **Trunk-Based Development** (single source trunk with short-lived feature branches)
    - **GitHub Flow** (lightweight PR-to-main strategy)
 2. **CI/CD Pipeline Simulation:**
-   - Visual execution of Lint, Vitest Unit Tests, SAST Security Audit, Vite Build, and Cloud Deployment (`branchlab.tech`).
+   - Mirrors this repository's own GitHub Actions workflow: Lint & Typecheck → Tests → Security Scan (npm audit + Trivy) → Docker Image & E2E → Deploy to Oracle Cloud (`main` only; other branches skip the deploy).
    - Real-time terminal log outputs and exit code status.
    - **Chaos Mode / Error Injection:** Simulate broken unit tests or lint errors to demonstrate branch protection gates.
-3. **Interactive DevOps Challenges:**
-   - Emergency production hotfix scenarios.
-   - Defending CI quality gates.
-   - Feature release workflows.
+   - CI results are stored per commit, so a pull request is only mergeable when its own latest commit is green.
+3. **Interactive DevOps Challenges** (one per branching model):
+   - Emergency production hotfix into the protected `main`.
+   - Defending the CI quality gate (starts with a failing test).
+   - Feature release into `develop`, and a GitHub Flow pull request.
+4. **Lab terminal:** `git status`, `git log`, `git branch`, `git commit`, `git checkout`/`git switch`, `git merge`, `run pipeline`.
 
 ---
 

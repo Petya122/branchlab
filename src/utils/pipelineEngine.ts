@@ -1,10 +1,15 @@
 import type { PipelineFailureConfig, PipelineRun, PipelineStage } from '../types/pipeline'
 
+/**
+ * The simulated pipeline mirrors BranchLab's own GitHub Actions workflow
+ * (.github/workflows/ci.yml): lint & typecheck → tests → security scans →
+ * Docker image + E2E → deploy to Oracle Cloud (main only).
+ */
 export const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
   {
     id: 'lint',
-    name: 'Lint & Code Style',
-    description: 'Runs oxlint & TypeScript compiler check',
+    name: 'Lint & Typecheck',
+    description: 'oxlint (0 warnings) and the TypeScript compiler',
     status: 'idle',
     durationMs: 0,
     logs: [],
@@ -14,7 +19,7 @@ export const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
   {
     id: 'unit-tests',
     name: 'Unit & Integration Tests',
-    description: 'Executes Vitest automated test suite',
+    description: 'Vitest + React Testing Library with a coverage gate',
     status: 'idle',
     durationMs: 0,
     logs: [],
@@ -23,8 +28,8 @@ export const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
   },
   {
     id: 'security',
-    name: 'SAST & Dependency Audit',
-    description: 'Scans for CVEs & insecure dependencies',
+    name: 'Security Scan',
+    description: 'npm audit and Trivy CVE scan of the image',
     status: 'idle',
     durationMs: 0,
     logs: [],
@@ -33,8 +38,8 @@ export const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
   },
   {
     id: 'build',
-    name: 'Production Bundle (Vite)',
-    description: 'Compiles minified assets & chunk trees',
+    name: 'Docker Image & E2E',
+    description: 'Vite build, ARM64 image, Playwright tests against it',
     status: 'idle',
     durationMs: 0,
     logs: [],
@@ -43,8 +48,8 @@ export const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
   },
   {
     id: 'deploy',
-    name: 'Deploy (branchlab.tech)',
-    description: 'Promotes artifacts to edge CDN & DNS',
+    name: 'Deploy to Oracle Cloud',
+    description: 'main only: push to GHCR, SSH deploy, health check',
     status: 'idle',
     durationMs: 0,
     logs: [],
@@ -52,6 +57,11 @@ export const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
     requiredForDeploy: false,
   },
 ]
+
+/** Like the real workflow, only commits on main are deployed. */
+export function deploysFrom(branch: string): boolean {
+  return branch === 'main'
+}
 
 export function createInitialPipelineRun(
   commitHash: string,
@@ -81,88 +91,92 @@ export function generateStageLogs(
   commitHash: string
 ): string[] {
   const timestamp = new Date().toLocaleTimeString()
+  const t = (line: string) => `[${timestamp}] ${line}`
 
   if (stageId === 'lint') {
     if (isSuccess) {
       return [
-        `[${timestamp}] [CI] Starting oxlint & tsc --noEmit check on commit ${commitHash}...`,
-        `[${timestamp}] [CI] Checked 18 source files.`,
-        `[${timestamp}] [CI] No syntax, formatting, or type errors detected.`,
-        `[${timestamp}] [SUCCESS] Lint checks passed in 480ms. ✨`,
+        t(`[CI] npm run lint -- --deny-warnings && tsc -b (commit ${commitHash})`),
+        t('[CI] Found 0 warnings and 0 errors.'),
+        t('[SUCCESS] Lint & typecheck passed. ✨'),
       ]
     }
     return [
-      `[${timestamp}] [CI] Starting oxlint & tsc --noEmit check on commit ${commitHash}...`,
-      `[${timestamp}] [ERROR] src/components/GitCanvas.tsx:42:18 - Type 'undefined' is not assignable to type 'string'.`,
-      `[${timestamp}] [ERROR] Lint failed with exit code 1.`,
-      `[${timestamp}] [FAILED] CI pipeline halted due to code quality check failure. ❌`,
+      t(`[CI] npm run lint -- --deny-warnings && tsc -b (commit ${commitHash})`),
+      t("[ERROR] src/components/GitCanvas.tsx:42:18 - Type 'undefined' is not assignable to type 'string'."),
+      t('[FAILED] Typecheck failed with exit code 1. Pipeline halted. ❌'),
     ]
   }
 
   if (stageId === 'unit-tests') {
     if (isSuccess) {
       return [
-        `[${timestamp}] [VITEST] Starting test suite in jsdom environment...`,
-        `[${timestamp}] PASS src/test/App.test.tsx (4 tests passed)`,
-        `[${timestamp}] PASS src/test/gitEngine.test.ts (6 tests passed)`,
-        `[${timestamp}] PASS src/test/pipelineEngine.test.ts (5 tests passed)`,
-        `[${timestamp}] Tests: 15 passed, 15 total | Duration: 1.12s`,
-        `[${timestamp}] [SUCCESS] Automated test suite passed 100% green! ✅`,
+        t('[VITEST] npm run test:coverage (jsdom environment)'),
+        t('PASS src/test/gitEngine.test.ts'),
+        t('PASS src/test/AppLab.test.tsx'),
+        t('PASS src/test/hooks.test.tsx'),
+        t('Tests: 128 passed, 128 total | Coverage: 93% lines (threshold 88%)'),
+        t('[SUCCESS] Test suite passed 100% green! ✅'),
       ]
     }
     return [
-      `[${timestamp}] [VITEST] Starting test suite in jsdom environment...`,
-      `[${timestamp}] FAIL src/test/gitEngine.test.ts > mergeBranches()`,
-      `[${timestamp}] AssertionError: expected branch 'main' head to point to merge commit c5, but got c4`,
-      `[${timestamp}] Tests: 1 failed, 14 passed, 15 total`,
-      `[${timestamp}] [FAILED] Test suite failed with exit code 1. Deployment blocked by CI guard! ❌`,
+      t('[VITEST] npm run test:coverage (jsdom environment)'),
+      t('FAIL src/test/gitEngine.test.ts > mergeBranches()'),
+      t("AssertionError: expected branch 'main' to point to merge commit c5, but got c4"),
+      t('Tests: 1 failed, 127 passed, 128 total'),
+      t('[FAILED] Test suite failed with exit code 1. Deployment blocked by the CI gate! ❌'),
     ]
   }
 
   if (stageId === 'security') {
     if (isSuccess) {
       return [
-        `[${timestamp}] [AUDIT] Scanning package.json and npm lockfile dependencies...`,
-        `[${timestamp}] [AUDIT] 157 dependencies audited against GitHub Advisory Database.`,
-        `[${timestamp}] [AUDIT] 0 known vulnerabilities found.`,
-        `[${timestamp}] [SUCCESS] SAST & security compliance check passed. 🛡️`,
+        t('[AUDIT] npm audit --audit-level=high'),
+        t('[AUDIT] found 0 vulnerabilities'),
+        t('[TRIVY] Scanning image (alpine 3.24) for HIGH/CRITICAL CVEs...'),
+        t('[SUCCESS] 0 vulnerabilities found. 🛡️'),
       ]
     }
     return [
-      `[${timestamp}] [AUDIT] Scanning package.json and lockfile dependencies...`,
-      `[${timestamp}] [ALERT] Found High Severity CVE in third-party bundle parser.`,
-      `[${timestamp}] [FAILED] Security gate failed: Insecure dependencies must be patched. ❌`,
+      t('[AUDIT] npm audit --audit-level=high'),
+      t('[TRIVY] Scanning image (alpine 3.24) for HIGH/CRITICAL CVEs...'),
+      t('[ALERT] libxslt CVE-2026-9947 HIGH: installed 1.1.43-r3, fixed in 1.1.43-r4'),
+      t('[FAILED] Security gate failed: patch the vulnerable package first. ❌'),
     ]
   }
 
   if (stageId === 'build') {
     if (isSuccess) {
       return [
-        `[${timestamp}] [VITE] Building for production (tsc -b && vite build)...`,
-        `[${timestamp}] dist/index.html                     0.78 kB │ gzip:  0.42 kB`,
-        `[${timestamp}] dist/assets/index-B_9K12a.css      14.22 kB │ gzip:  3.65 kB`,
-        `[${timestamp}] dist/assets/index-D78mG10.js      188.10 kB │ gzip: 59.80 kB`,
-        `[${timestamp}] [SUCCESS] Built in 620ms. Bundle artifacts ready. 📦`,
+        t('[VITE] npm run build → dist/ (HTML, JS, CSS)'),
+        t('[DOCKER] Building ARM64 image: node builder → nginx-unprivileged runtime'),
+        t('[E2E] Playwright: 15 passed (desktop + mobile) against the image'),
+        t('[SUCCESS] Image built and tested. 📦'),
       ]
     }
     return [
-      `[${timestamp}] [VITE] Building for production (tsc -b && vite build)...`,
-      `[${timestamp}] [ERROR] Out of memory during chunk optimization or invalid asset path.`,
-      `[${timestamp}] [FAILED] Build failed with exit code 1. ❌`,
+      t('[VITE] npm run build → dist/ (HTML, JS, CSS)'),
+      t('[ERROR] Could not resolve "./components/Missing" from "src/App.tsx"'),
+      t('[FAILED] Build failed with exit code 1. ❌'),
     ]
   }
 
   if (stageId === 'deploy') {
-    const domain = branch === 'main' ? 'https://branchlab.tech' : `https://branchlab-preview-${commitHash}.edge.app`
+    if (!deploysFrom(branch)) {
+      return [
+        t(`[CI] Deploy skipped: '${branch}' is not main. Only main is deployed to production.`),
+        t('[CI] Merge this branch (via PR) into main to release it.'),
+      ]
+    }
     return [
-      `[${timestamp}] [CLOUD] Promoting build artifacts to edge network...`,
-      `[${timestamp}] [CLOUD] Provisioning SSL certificate & DNS records...`,
-      `[${timestamp}] [CLOUD] Environment: ${branch === 'main' ? 'PRODUCTION' : 'PREVIEW'}`,
-      `[${timestamp}] [SUCCESS] Deployed successfully to ${domain} 🚀`,
+      t(`[DOCKER] Pushing ghcr.io/petya122/branchlab:sha-${commitHash}`),
+      t('[CLOUD] SSH to the Oracle Cloud VM → docker compose up --wait'),
+      t('[CLOUD] Health check: healthy • Caddy reloaded'),
+      t(`[SUCCESS] Smoke test passed: https://branchlab.tech serves ${commitHash} 🚀`),
     ]
   }
 
-  return [`[${timestamp}] Completed stage ${stageId}.`]
+  return [t(`Completed stage ${stageId}.`)]
 }
 
 export function shouldStageFail(stageId: string, config: PipelineFailureConfig): boolean {

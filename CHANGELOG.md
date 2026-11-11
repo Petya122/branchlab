@@ -7,6 +7,52 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-11
+
+Full site review: layout, logic and content consistency.
+
+### Fixed
+- **Desktop navbar:** at common laptop widths (e.g. 1280px) the PR, Conflict and Run CI/CD buttons
+  were pushed off-screen. The navbar now wraps the quick actions onto a second row.
+- **Phone action dock** did not stick to the bottom of the screen (`overflow-x: hidden` on body broke
+  `position: sticky`); it now uses `overflow-x: clip`.
+- **Onboarding tour:** "Don't show this guide" was ignored when the tour was closed with ✕, Esc or a
+  click outside, so it opened on every visit. The choice is now saved as soon as it is ticked.
+- **Terminal:** every typed git command was printed twice; `git status` showed an internal id (`c1`)
+  instead of the commit hash.
+- **Pipeline:** feature-branch runs "deployed" to a made-up preview URL and showed "Deployment Live on
+  branchlab.tech". Like the real workflow, the deploy stage is now skipped for anything but `main`.
+- **Challenges:** "Defend the Quality Gate" said a test was broken but injected no failure; it now
+  starts with "Tests Fail". The first challenge, terminal text and pipeline now match the default
+  branching model from Settings (they always assumed GitFlow).
+- **Quality Gatekeeper** trophy unlocked on any green run; it now needs a red pipeline turned green.
+- **Trophy Room:** "XP to next level" showed the level's size instead of the XP still missing, and the
+  top level promised an unreachable next level.
+- **Branch names** with spaces, `..`, a trailing `/` etc. were accepted; they are now validated like
+  Git does, with an explanation in the Branch dialog.
+- The `v0.1.0` tag badge covered the `main` lane label; the homepage animation box showed a needless
+  scrollbar.
+
+### Changed
+- Pipeline stages and logs mirror the real workflow (oxlint + tsc, Vitest with coverage, npm audit +
+  Trivy, Docker image + Playwright E2E, GHCR + SSH deploy + smoke test) instead of the old Vercel-era
+  "edge CDN" texts.
+- Up-to-date texts: homepage test badge, footer, tutorial button names, Settings descriptions, Trophy
+  descriptions, valid hexadecimal commit hashes in the homepage animation. The terminal header shows
+  the real app version.
+- `favicon.png` was a 1024×1024 JPEG (462 KB) with a `.png` name; replaced by real PNGs
+  (`apple-touch-icon.png` 180×180, `favicon-32.png`). Unused `avatar.png` removed.
+- Link previews: absolute `og:image` URL, `og:site_name`, Twitter card, canonical URL; added
+  `robots.txt`, `sitemap.xml` and a `<noscript>` message.
+
+### Added
+- Terminal commands `git log`, `git branch`, `git switch` and `git switch -c`.
+- A GitHub Flow challenge ("Merge Through a Pull Request").
+- Keyboard access and labels: commit dots and pipeline stages are focusable buttons, the terminal
+  input and the Settings button have accessible names, `Esc` already closes dialogs.
+- 34 new regression tests (162 Vitest tests) and an E2E test that checks every quick action is on
+  screen at 1280px and on phones.
+
 ## [1.5.1] - 2026-11-11
 
 ### Fixed
@@ -174,7 +220,8 @@ First versioned release. Production runs on Oracle Cloud at https://branchlab.te
 - Deprecated `X-XSS-Protection` header.
 - Routes for the retired lecture4 demo stack.
 
-[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/Petya122/branchlab/compare/v1.5.1...v1.6.0
 [1.5.1]: https://github.com/Petya122/branchlab/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/Petya122/branchlab/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/Petya122/branchlab/compare/v1.3.0...v1.4.0

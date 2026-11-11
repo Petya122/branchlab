@@ -211,11 +211,11 @@ describe('SettingsModal', () => {
     expect(click).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps all data when "Clear Cache" is cancelled', () => {
+  it('keeps all data when "Clear Saved Data" is cancelled', () => {
     renderSettings()
     localStorage.setItem('branchlab_settings_v1', '{}')
     vi.spyOn(window, 'confirm').mockReturnValue(false)
-    fireEvent.click(screen.getByRole('button', { name: /clear cache/i }))
+    fireEvent.click(screen.getByRole('button', { name: /clear saved data/i }))
     expect(localStorage.getItem('branchlab_settings_v1')).toBe('{}')
   })
 })

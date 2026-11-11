@@ -79,9 +79,9 @@ export const LabDashboard: React.FC<LabDashboardProps> = (props) => (
       <div className="panel-header">
         <div className="panel-title">
           <Play size={16} color="#10b981" />
-          CI/CD Pipeline Simulator (Vitest & Docker / Cloud)
+          CI/CD Pipeline Simulator
         </div>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Vite + Vitest + GitHub Actions</span>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>mirrors the real GitHub Actions workflow</span>
       </div>
       <div className="panel-body">
         <PipelineViewer

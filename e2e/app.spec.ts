@@ -138,6 +138,18 @@ test.describe('Interactive Lab', () => {
     await actions.getByRole('button', { name: /commit/i }).click()
     await expect(page.getByText('Create New Commit')).toBeVisible()
   })
+
+  // Regression: at 1280px the PR / Conflict / Run CI/CD buttons were pushed off-screen,
+  // and on phones the action dock only appeared at the very end of the page.
+  test('every quick action is inside the screen without scrolling', async ({ page, isMobile }) => {
+    if (!isMobile) await page.setViewportSize({ width: 1280, height: 800 })
+    await openLab(page)
+    const actions = isMobile ? page.locator('.mobile-action-bar') : page.locator('.desktop-actions')
+    for (const button of await actions.getByRole('button').all()) {
+      await expect(button).toBeInViewport({ ratio: 1 })
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0)
+  })
 })
 
 test.describe('Content Security Policy', () => {

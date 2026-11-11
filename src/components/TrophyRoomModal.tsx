@@ -132,8 +132,16 @@ export const TrophyRoomModal: React.FC<TrophyRoomModalProps> = ({
             />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
-            <span>{levelInfo.currentXp} XP in level</span>
-            <span>{levelInfo.nextLevelXp} XP to next level</span>
+            {levelInfo.isMaxLevel ? (
+              <span>Maximum level reached: every trophy unlocked 🎉</span>
+            ) : (
+              <>
+                <span>
+                  {levelInfo.currentXp} / {levelInfo.nextLevelXp} XP in this level
+                </span>
+                <span>{levelInfo.xpToNextLevel} XP to Level {levelInfo.level + 1}</span>
+              </>
+            )}
           </div>
         </div>
 

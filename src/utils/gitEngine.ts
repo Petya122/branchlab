@@ -223,11 +223,31 @@ export function commitToActiveBranch(
   }
 }
 
+/**
+ * A simplified `git check-ref-format`: returns why a branch name is invalid,
+ * or null if it is fine. Real Git rejects the same cases (spaces, "..",
+ * a leading "-", a trailing "/" or ".", "//", ".lock" at the end, ...).
+ */
+export function validateBranchName(name: string): string | null {
+  if (!name) return 'Branch name is empty.'
+  if (/\s/.test(name)) return 'Branch names cannot contain spaces.'
+  if (!/^[A-Za-z0-9._/-]+$/.test(name)) return 'Use only letters, digits and . _ - /'
+  if (name.startsWith('-') || name.startsWith('/') || name.startsWith('.')) return "Branch names cannot start with '-', '/' or '.'."
+  if (name.endsWith('/') || name.endsWith('.') || name.endsWith('.lock')) return "Branch names cannot end with '/', '.' or '.lock'."
+  if (name.includes('..') || name.includes('//') || name.includes('/.')) return "Branch names cannot contain '..', '//' or '/.'."
+  if (name.toUpperCase() === 'HEAD') return "'HEAD' is reserved."
+  return null
+}
+
 export function createBranch(
   state: GitGraphState,
   newBranchName: string,
   fromBranchName?: string
 ): GitGraphState {
+  const invalid = validateBranchName(newBranchName)
+  if (invalid) {
+    throw new Error(`'${newBranchName}' is not a valid branch name: ${invalid}`)
+  }
   if (state.branches[newBranchName]) {
     throw new Error(`Branch '${newBranchName}' already exists.`)
   }
@@ -376,6 +396,26 @@ export function squashMerge(
     },
     squashCommit,
   }
+}
+
+/**
+ * `git log --oneline` from HEAD: follows first parents (the branch's own
+ * line of history), newest first, with branch and tag decorations.
+ */
+export function onelineLog(state: GitGraphState, limit = 10): string[] {
+  const byId = new Map(state.commits.map((c) => [c.id, c]))
+  const lines: string[] = []
+  let current = byId.get(state.headCommitId)
+  while (current && lines.length < limit) {
+    const commit: Commit = current
+    const refs = Object.values(state.branches)
+      .filter((b) => b.targetCommitId === commit.id)
+      .map((b) => (b.name === state.activeBranch ? `HEAD -> ${b.name}` : b.name))
+    if (commit.tag) refs.push(`tag: ${commit.tag}`)
+    lines.push(`${commit.hash}${refs.length ? ` (${refs.join(', ')})` : ''} ${commit.message}`)
+    current = byId.get(commit.parents[0])
+  }
+  return lines
 }
 
 /**

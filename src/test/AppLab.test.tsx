@@ -147,8 +147,28 @@ describe('CI/CD pipeline simulator', () => {
     renderLab()
     await runPipelineToEnd()
     expect(terminalLines().some((l) => l.startsWith('[CI/CD RESULT] All checks passed'))).toBe(true)
-    // Quality Gatekeeper trophy
-    expect(terminalLines().some((l) => l.includes('[ACHIEVEMENT UNLOCKED]'))).toBe(true)
+  })
+
+  // The Quality Gatekeeper trophy is for fixing a red pipeline, not for any green run
+  it('awards Quality Gatekeeper only after turning a red pipeline green', async () => {
+    vi.useFakeTimers()
+    renderLab()
+    await runPipelineToEnd()
+    expect(terminalLines().some((l) => l.includes('Quality Gatekeeper'))).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: /tests pass/i }))
+    await runPipelineToEnd()
+    fireEvent.click(screen.getByRole('button', { name: /tests fail/i }))
+    await runPipelineToEnd()
+    expect(terminalLines().some((l) => l.includes('[ACHIEVEMENT UNLOCKED] Quality Gatekeeper'))).toBe(true)
+  })
+
+  it('skips the deploy for a feature branch, like the real workflow', async () => {
+    vi.useFakeTimers()
+    renderLab() // GitFlow starts on feature/auth
+    await runPipelineToEnd()
+    expect(terminalLines().some((l) => l.includes("Deploy skipped: 'feature/auth' is not main"))).toBe(true)
+    expect(screen.queryByText(/deployment live/i)).toBeNull()
+    expect(screen.getByRole('button', { name: /deploy to oracle cloud: skipped/i })).toBeInTheDocument()
   })
 
   it('stops at the failing stage when chaos injection is enabled', async () => {
@@ -227,7 +247,7 @@ describe('Simulator rules (regressions)', () => {
     fireEvent.click(screen.getByTitle(/simulate github pull request/i))
     expect(screen.getByText(/all checks have passed/i)).toBeInTheDocument()
     // GitFlow: feature branches are integrated into develop
-    expect(screen.getByText(/into/i).textContent).toContain('develop')
+    expect(document.querySelector('.modal-content')?.textContent).toContain('into develop from feature/auth')
   })
 
   it('does not open a PR from the integration target itself', () => {
