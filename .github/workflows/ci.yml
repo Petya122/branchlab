@@ -6,6 +6,12 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+  # Weekly re-check of main: new CVEs are published all the time, so an image
+  # that was clean at merge time can fail Trivy later. The run builds, scans
+  # and tests only; it never pushes or deploys (see the push/deploy conditions).
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -79,7 +85,7 @@ jobs:
         run: |
           docker run --rm \
             -v "$PWD/infra/caddy/conf:/etc/caddy:ro" \
-            caddy:2.11.7-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+            caddy:2.11.9-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
   docker-image:
     name: Docker Image
@@ -125,6 +131,7 @@ jobs:
           build-args: |
             GIT_SHA=${{ github.sha }}
             APP_VERSION=${{ steps.vars.outputs.app_version }}
+            APK_CACHE_BUST=${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -135,9 +142,9 @@ jobs:
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "$HOME/.cache/trivy:/root/.cache/trivy" \
-            aquasec/trivy:0.70.0 image \
+            aquasec/trivy:0.76.2 image \
               --exit-code 1 --ignore-unfixed \
-              --vuln-type os,library --severity CRITICAL,HIGH \
+              --pkg-types os,library --severity CRITICAL,HIGH \
               --format table branchlab:scan
 
       # Browser tests against the exact image that will be pushed: real nginx,
@@ -167,7 +174,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: 🔐 Log in to GHCR
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push'
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
@@ -175,7 +182,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📤 Push Image to GHCR
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
@@ -185,6 +192,7 @@ jobs:
           build-args: |
             GIT_SHA=${{ github.sha }}
             APP_VERSION=${{ steps.vars.outputs.app_version }}
+            APK_CACHE_BUST=${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=gha
 
   deploy:

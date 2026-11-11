@@ -25,7 +25,11 @@ LABEL org.opencontainers.image.source="https://github.com/Petya122/branchlab" \
 # Pull in Alpine security fixes that are newer than the base image
 # (the Trivy gate in CI fails on fixable HIGH/CRITICAL vulnerabilities)
 USER root
-RUN apk upgrade --no-cache
+# CI passes a value that changes on every run (run id + attempt), so this layer
+# is never reused from the build cache: a cached layer would keep yesterday's
+# packages and miss fixes released since (that is how 1.43-r3 libxslt slipped in).
+ARG APK_CACHE_BUST=local
+RUN echo "apk upgrade (cache bust: ${APK_CACHE_BUST})" && apk upgrade --no-cache
 
 # Nginx config + shared security headers snippet
 COPY nginx.conf /etc/nginx/conf.d/default.conf
