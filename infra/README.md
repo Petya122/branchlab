@@ -118,7 +118,9 @@ docker system df && docker image prune -a           # disk usage / cleanup
 ## Host setup (`infra/host/setup-host.sh`)
 
 Everything configured on the OS itself (outside Docker) is in one idempotent
-script. Run it once on a new server, or again after changing it:
+script. Run it once on a new server, or again after changing it. Re-runs cause
+no downtime: containers are only recreated when the Docker log settings change
+(force it with `--recreate`).
 
 ```bash
 ssh -t ssh.branchlab.tech "sudo bash ~/branchlab/infra/host/setup-host.sh"
@@ -128,7 +130,8 @@ ssh -t ssh.branchlab.tech "sudo bash ~/branchlab/infra/host/setup-host.sh"
 | :--- | :--- |
 | Disk | `oci-growfs` grows `/` into the whole 75 GB boot volume |
 | SSH brute force | fail2ban `sshd` jail: 5 failures / 10 min → 1 h ban, increasing for repeat offenders (bans via firewalld) |
-| Updates | `dnf-automatic`: security updates installed daily (~06:00), automatic reboot only when a kernel/core library requires it |
+| Updates | `dnf-automatic`: security updates installed daily (~06:00–07:00). `reboot-if-needed.timer` reboots at 07:30 only if `needs-restarting -r` says so (dnf-automatic's own reboot check misses `kernel-uek`, the Oracle kernel) |
+| Leftovers | Removes old systemd units from earlier setups (`arcane.service` restarted every 2 s after Arcane moved to `infra/arcane`) and old firewalld port rules |
 | Docker logs | `json-file`, max 10 MB × 3 files per container; `live-restore` keeps containers running across Docker restarts |
 
 Useful checks: `sudo fail2ban-client status sshd`, `systemctl list-timers 'dnf*'`,
