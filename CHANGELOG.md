@@ -7,6 +7,17 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Fixed
+- **Host: a leftover `arcane.service` systemd unit restarted every 2 seconds.** It came from the
+  original Arcane install and ran `docker compose up` in `~/arcane`, a folder that no longer exists
+  since Arcane moved to `infra/arcane` (about 248,000 restarts and 141,000 journal lines in 6 days).
+  `setup-host.sh` now removes it; the Arcane container itself was never affected.
+- **Host: kernel updates never triggered the automatic reboot.** dnf-automatic's `when-needed`
+  check uses a fixed package list without `kernel-uek`, the kernel Oracle Linux runs. A daily
+  `reboot-if-needed.timer` (07:30) now reboots whenever `needs-restarting -r` says so.
+- Re-running `setup-host.sh` no longer recreates every container (only when the Docker log settings
+  change, or with `--recreate`), so it causes no downtime.
+
 ## [1.6.1] - 2026-11-11
 
 Meaningful tests: every test now has a reason to exist, and mutation testing proves it.
