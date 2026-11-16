@@ -1,5 +1,5 @@
 # Stage 1: Build the production static React/Vite app
-FROM node:26.13.0-alpine3.24 AS builder
+FROM node:26.13.1-alpine3.24 AS builder
 
 WORKDIR /app
 
