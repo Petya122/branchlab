@@ -11,11 +11,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - arcane-data:/app/data
-    env_file:
-      - .env
+    # Arcane v3 only reads ARCANE_-prefixed settings and refuses to start while
+    # the old names (APP_URL, ENCRYPTION_KEY) are set, so the values from .env
+    # are mapped here instead of passing the file through with env_file.
     environment:
-      - APP_URL=${APP_URL:-https://arcane.branchlab.tech}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ARCANE_APP_URL=${APP_URL:-https://arcane.branchlab.tech}
+      - ARCANE_ENCRYPTION_KEY=${ENCRYPTION_KEY:?set ENCRYPTION_KEY in infra/arcane/.env}
     labels:
       - com.getarcaneapp.arcane.hidden=true
     networks:

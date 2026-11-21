@@ -8,6 +8,12 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Fixed
+- **Arcane did not start after the Dependabot update to v3.0.1** (major version). Arcane v3 only
+  reads `ARCANE_`-prefixed settings and exits while the old `APP_URL` / `ENCRYPTION_KEY` are set,
+  so it was in a restart loop. The compose file now maps the existing `.env` values to
+  `ARCANE_APP_URL` / `ARCANE_ENCRYPTION_KEY` (no change to the server's secret file needed).
+
+### Fixed
 - **Host: a leftover `arcane.service` systemd unit restarted every 2 seconds.** It came from the
   original Arcane install and ran `docker compose up` in `~/arcane`, a folder that no longer exists
   since Arcane moved to `infra/arcane` (about 248,000 restarts and 141,000 journal lines in 6 days).
