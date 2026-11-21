@@ -14,6 +14,10 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
   instead of hanging for GitHub's default 6 hours.
 
 ### Fixed
+- **Firefox: the homepage animation was blocked by the CSP** (~300 console errors, frozen dashes and
+  beacon). Firefox applies SVG `<animate>` (SMIL) animations of CSS properties as inline styles,
+  which `style-src 'self'` forbids. They are now CSS keyframe animations from the stylesheet
+  (speed via CSS variables) and respect `prefers-reduced-motion`. Found by the new Firefox E2E run.
 - The CSP E2E test ignores one documented WebKit false positive: Safari reports `style-src-attr`
   for every native `<select>` under a strict CSP (reproduced on a blank page; Chromium and Firefox
   report nothing). All other violations still fail the test.
