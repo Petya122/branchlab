@@ -7,37 +7,36 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [1.6.2] - 2026-11-21
+
+Cross-browser testing and server fixes: four browsers in CI, plus three real problems they and a
+server check found.
+
 ### Changed
 - **E2E in all three browser engines:** besides Chromium (desktop + Android), Playwright now also
   runs on an iPhone (WebKit; every iPhone browser uses it) and desktop Firefox.
 - **`timeout-minutes` on every CI job** (15 / 30 / 10, rollback 10): a stuck job now fails quickly
   instead of hanging for GitHub's default 6 hours.
+- Dependency updates via Dependabot, incl. **Arcane v2 → v3.0.1** and Node 26.13.1.
 
 ### Fixed
 - **Firefox: the homepage animation was blocked by the CSP** (~300 console errors, frozen dashes and
   beacon). Firefox applies SVG `<animate>` (SMIL) animations of CSS properties as inline styles,
   which `style-src 'self'` forbids. They are now CSS keyframe animations from the stylesheet
   (speed via CSS variables) and respect `prefers-reduced-motion`. Found by the new Firefox E2E run.
-- The CSP E2E test ignores one documented WebKit false positive: Safari reports `style-src-attr`
-  for every native `<select>` under a strict CSP (reproduced on a blank page; Chromium and Firefox
-  report nothing). All other violations still fail the test.
-
-### Fixed
-- **Arcane did not start after the Dependabot update to v3.0.1** (major version). Arcane v3 only
-  reads `ARCANE_`-prefixed settings and exits while the old `APP_URL` / `ENCRYPTION_KEY` are set,
-  so it was in a restart loop. The compose file now maps the existing `.env` values to
-  `ARCANE_APP_URL` / `ARCANE_ENCRYPTION_KEY` (no change to the server's secret file needed).
-
-### Fixed
-- **Host: a leftover `arcane.service` systemd unit restarted every 2 seconds.** It came from the
-  original Arcane install and ran `docker compose up` in `~/arcane`, a folder that no longer exists
-  since Arcane moved to `infra/arcane` (about 248,000 restarts and 141,000 journal lines in 6 days).
-  `setup-host.sh` now removes it; the Arcane container itself was never affected.
+- **Arcane did not start after the update to v3.0.1** (major version). Arcane v3 only reads
+  `ARCANE_`-prefixed settings and exits while the old `APP_URL` / `ENCRYPTION_KEY` are set. The
+  compose file now maps the existing `.env` values to `ARCANE_APP_URL` / `ARCANE_ENCRYPTION_KEY`.
+- **Host: a leftover `arcane.service` systemd unit restarted every 2 seconds** (about 248,000
+  restarts in 6 days) because its `~/arcane` folder no longer exists. `setup-host.sh` removes it.
 - **Host: kernel updates never triggered the automatic reboot.** dnf-automatic's `when-needed`
-  check uses a fixed package list without `kernel-uek`, the kernel Oracle Linux runs. A daily
-  `reboot-if-needed.timer` (07:30) now reboots whenever `needs-restarting -r` says so.
-- Re-running `setup-host.sh` no longer recreates every container (only when the Docker log settings
-  change, or with `--recreate`), so it causes no downtime.
+  check does not know `kernel-uek`, the Oracle Linux kernel. A daily `reboot-if-needed.timer`
+  (07:30) now reboots whenever `needs-restarting -r` says so.
+- Re-running `setup-host.sh` no longer recreates every container (only when the Docker log
+  settings change, or with `--recreate`), so it causes no downtime.
+- The CSP E2E test ignores one documented WebKit false positive: Safari reports `style-src-attr`
+  for every native `<select>` under a strict CSP (reproduced on a blank page). All other
+  violations still fail the test.
 
 ## [1.6.1] - 2026-11-11
 
@@ -270,7 +269,8 @@ First versioned release. Production runs on Oracle Cloud at https://branchlab.te
 - Deprecated `X-XSS-Protection` header.
 - Routes for the retired lecture4 demo stack.
 
-[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.6.1...HEAD
+[Unreleased]: https://github.com/Petya122/branchlab/compare/v1.6.2...HEAD
+[1.6.2]: https://github.com/Petya122/branchlab/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/Petya122/branchlab/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/Petya122/branchlab/compare/v1.5.1...v1.6.0
 [1.5.1]: https://github.com/Petya122/branchlab/compare/v1.5.0...v1.5.1
