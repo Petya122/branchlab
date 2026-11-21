@@ -7,6 +7,11 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Added
+- **Dependabot auto-merge** (`.github/workflows/dependabot-auto-merge.yml`): patch updates and
+  minor updates of dev dependencies are merged automatically once the required checks pass;
+  major and other updates still need a human. Requires "Allow auto-merge" in the repo settings.
+
 ### Fixed
 - **Host: a leftover `arcane.service` systemd unit restarted every 2 seconds.** It came from the
   original Arcane install and ran `docker compose up` in `~/arcane`, a folder that no longer exists

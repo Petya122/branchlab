@@ -146,6 +146,11 @@ git push -u origin feat/my-change
 # open a PR, wait for green checks, squash-merge -> automatic deploy
 ```
 
+**Dependency updates:** Dependabot opens weekly PRs (npm, GitHub Actions, Docker images, infra
+compose files) after a cooldown of 3–14 days. Low-risk ones (patch updates, and minor updates of
+dev dependencies) are merged automatically by `.github/workflows/dependabot-auto-merge.yml`, but
+only after the same required checks pass. Major and other updates wait for a human review.
+
 ### Deploy, verify, roll back
 
 | Step | What happens |

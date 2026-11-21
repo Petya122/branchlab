@@ -1,0 +1,62 @@
+name: Dependabot auto-merge
+
+# Turns on GitHub auto-merge for low-risk Dependabot PRs. GitHub then merges
+# the PR only after the required checks of the `protect-main` ruleset pass
+# (Lint, Test & Build + Docker Image incl. Trivy and Playwright); if anything
+# fails, the PR just stays open for a human. The merge deploys like any other.
+#
+# Merged automatically:
+#   - patch updates (1.2.3 -> 1.2.4): bug and security fixes
+#   - minor updates of dev dependencies (Vitest, Playwright, oxlint, @types...),
+#     which never reach the website itself
+# Always left for a human: everything else, e.g. major versions (breaking
+# changes possible), runtime minor updates, grouped PRs with a minor bump.
+#
+# Needs: Settings -> General -> "Allow auto-merge" turned on.
+# Dependabot's cooldown (.github/dependabot.yml) still delays every update by
+# days, so freshly published (possibly compromised) releases are not taken.
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Enable auto-merge
+    # Only Dependabot's own PRs in this repository (never forks)
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'Petya122/branchlab'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read update metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge patch updates and minor dev-dependency updates
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          (steps.meta.outputs.update-type == 'version-update:semver-minor' &&
+           steps.meta.outputs.dependency-type == 'direct:development')
+        run: |
+          gh pr merge --auto --squash "$PR_URL"
+          echo "Auto-merge enabled: ${UPDATE_TYPE} (${DEP_NAMES}). Merges when the required checks pass." >> "$GITHUB_STEP_SUMMARY"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          DEP_NAMES: ${{ steps.meta.outputs.dependency-names }}
+
+      - name: Leave everything else for a human
+        if: >-
+          !(steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+            (steps.meta.outputs.update-type == 'version-update:semver-minor' &&
+             steps.meta.outputs.dependency-type == 'direct:development'))
+        run: |
+          echo "Not auto-merged: ${UPDATE_TYPE} (${DEP_TYPE}) for ${DEP_NAMES}. Please review and merge by hand." >> "$GITHUB_STEP_SUMMARY"
+        env:
+          UPDATE_TYPE: ${{ steps.meta.outputs.update-type }}
+          DEP_TYPE: ${{ steps.meta.outputs.dependency-type }}
+          DEP_NAMES: ${{ steps.meta.outputs.dependency-names }}
