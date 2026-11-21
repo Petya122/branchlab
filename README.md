@@ -105,7 +105,7 @@ What we test and **why** (and what we deliberately don't): see **[TESTING.md](TE
 | **Integration Tests** | `@testing-library/react`     | The whole lab driven like a student: CI quality gate, branch protection, dialogs; mostly regression tests of real bugs |
 | **Coverage**        | `@vitest/coverage-v8`          | ~91% lines; CI fails below the thresholds in `vite.config.ts`, report shown in the job summary |
 | **Mutation check**  | `python scripts/mutation-check.py` | Injects 10 realistic bugs one by one; the suite must catch all of them (10/10) |
-| **E2E Tests**       | **Playwright** (Chromium, desktop + mobile) | Real browser against the production Docker image: the quality-gate journey (red CI blocks the PR, green merges it), layout at 1280px and on phones, zero CSP violations, no third-party requests, security headers |
+| **E2E Tests**       | **Playwright** (Chromium desktop + Android, WebKit/iPhone, Firefox) | Real browser against the production Docker image: the quality-gate journey (red CI blocks the PR, green merges it), layout at 1280px and on phones, zero CSP violations, no third-party requests, security headers |
 | **Lint**            | `oxlint`                       | React hooks rules and TypeScript lint, warnings fail the build             |
 | **Security**        | `npm audit` + **Trivy**        | Vulnerable npm dependencies and image (OS + library) CVEs                  |
 | **CI Automation**   | **GitHub Actions**             | Automated validation on every `push` and `pull_request` to `main`          |

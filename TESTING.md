@@ -12,7 +12,7 @@
 | Unit | Vitest | 53 | Pure rules: Git engine, terminal parser, levels/trophies. Milliseconds, pinpoints the broken rule. |
 | Hook / component | Vitest + React Testing Library | 30 | Team rules (protected `main`, CI gate, PRs, conflicts), the pipeline, each dialog, driven by role and label like a user. |
 | Integration | Vitest + RTL, whole `<App />` | 19 | Journeys through the real lab state: terminal → graph → pipeline → PR. Most are regression tests of real bugs. |
-| End-to-end | Playwright (desktop + phone) | 10 | What only a real browser shows: layout, fonts, CSP enforcement, nginx headers, the full quality-gate journey. |
+| End-to-end | Playwright in 3 engines: Chromium (desktop + Android), WebKit (iPhone), Firefox | 10 | What only a real browser shows: layout, fonts, CSP enforcement, nginx headers, the full quality-gate journey. Every browser on an iPhone is WebKit, so Safari bugs show up here. |
 
 Every file starts with a `WHY:` comment that names the risk it protects.
 

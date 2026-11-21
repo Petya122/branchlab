@@ -43,13 +43,26 @@ async function recordCspViolations(page: Page) {
     const w = window as unknown as { __cspViolations: string[] }
     w.__cspViolations = []
     document.addEventListener('securitypolicyviolation', (e) => {
-      w.__cspViolations.push(`${e.violatedDirective} blocked ${e.blockedURI || 'inline'} (${e.sourceFile}:${e.lineNumber})`)
+      const tag = (e.target as Element | null)?.nodeName ?? '?'
+      w.__cspViolations.push(`${e.violatedDirective} blocked ${e.blockedURI || 'inline'} on <${tag}> (${e.sourceFile}:${e.lineNumber})`)
     })
   })
 }
 
-const cspViolations = (page: Page) =>
-  page.evaluate(() => (window as unknown as { __cspViolations: string[] }).__cspViolations)
+/**
+ * WebKit (Safari) reports `style-src-attr` for every native <select> under a
+ * strict CSP: its built-in dropdown uses an internal inline style. A blank
+ * page with only `style-src 'self'` and one <select> reproduces it, and
+ * Chromium/Firefox report nothing. It is a browser false positive, not
+ * something BranchLab does, so only this exact case is ignored on WebKit.
+ * Every other violation, in every browser, still fails the test.
+ */
+const isWebKitSelectQuirk = (violation: string) => /^style-src-attr blocked inline on <SELECT>/.test(violation)
+
+const cspViolations = async (page: Page, browserName: string) => {
+  const all = await page.evaluate(() => (window as unknown as { __cspViolations: string[] }).__cspViolations)
+  return browserName === 'webkit' ? all.filter((v) => !isWebKitSelectQuirk(v)) : all
+}
 
 /**
  * WHY E2E: only a real browser shows real layout, real fonts, real CSP
@@ -145,7 +158,7 @@ test.describe('Content Security Policy', () => {
     expect(csp).not.toContain('unsafe-eval')
   })
 
-  test('nothing in the app violates it', async ({ page }) => {
+  test('nothing in the app violates it', async ({ page, browserName }) => {
     const errors = watchForErrors(page)
     await recordCspViolations(page)
     await openLab(page)
@@ -171,8 +184,12 @@ test.describe('Content Security Policy', () => {
     await page.getByRole('button', { name: 'Home', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
-    expect(await cspViolations(page)).toEqual([])
-    expect(errors).toEqual([])
+    expect(await cspViolations(page, browserName)).toEqual([])
+    // WebKit also logs the <select> quirk above to the console; real CSP
+    // problems are already caught precisely by the violation check.
+    const webkitQuirkLog = /^Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline' does not appear/
+    const consoleErrors = browserName === 'webkit' ? errors.filter((e) => !webkitQuirkLog.test(e)) : errors
+    expect(consoleErrors).toEqual([])
   })
 })
 
