@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * End-to-end tests in a real Chromium browser.
+ * End-to-end tests in real browsers (Chromium, WebKit/Safari, Firefox).
  *
  * - Locally:  `npm run test:e2e` builds the app and serves it with `vite preview`.
  * - In CI:    E2E_BASE_URL points at the freshly built production Docker image
@@ -21,9 +21,14 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
+  // The three browser engines real visitors use: Chromium (Chrome, Edge,
+  // Android), WebKit (Safari; on iPhones EVERY browser is WebKit, even Chrome)
+  // and Gecko (Firefox). Layout, fonts and CSP enforcement differ between them.
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    { name: 'iphone', use: { ...devices['iPhone 15'] } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
   ],
   webServer: externalBaseURL
     ? undefined

@@ -23,6 +23,9 @@ jobs:
   validate-and-build:
     name: Lint, Test & Build
     runs-on: ubuntu-latest
+    # Normally ~2 min. A stuck job fails after the limit instead of hanging
+    # for GitHub's default 6 hours.
+    timeout-minutes: 15
 
     steps:
       - name: 📥 Checkout Repository
@@ -92,6 +95,8 @@ jobs:
     needs: validate-and-build
     # Native ARM64 runner: the OCI server is an Ampere ARM64 VM
     runs-on: ubuntu-24.04-arm
+    # Normally ~3-4 min (build, Trivy, Playwright in 4 browser projects)
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -199,6 +204,7 @@ jobs:
     name: Deploy to Oracle Cloud
     needs: docker-image
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: read

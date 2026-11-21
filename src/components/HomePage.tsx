@@ -217,7 +217,22 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <div style={{ width: '100%', minWidth: '700px', height: '245px', position: 'relative' }}>
               {/* display:block: an inline SVG leaves a few px of text-baseline space, which made the box scroll */}
-              <svg viewBox="0 0 900 245" style={{ width: '100%', height: '100%', display: 'block' }} aria-hidden="true">
+              {/* Dash and beacon animations are CSS (index.css), not SVG <animate>: Firefox applies
+                  SMIL animations of CSS properties as inline styles, which the strict CSP blocks.
+                  The speeds are passed as CSS variables (set via the CSSOM, which CSP allows). */}
+              <svg
+                viewBox="0 0 900 245"
+                aria-hidden="true"
+                style={
+                  {
+                    width: '100%',
+                    height: '100%',
+                    display: 'block',
+                    '--dash-dur': speedConfig.dashDur,
+                    '--beacon-dur': speedConfig.beaconDur,
+                  } as React.CSSProperties
+                }
+              >
               <defs>
                 {/* Fixed Linear Gradients with userSpaceOnUse for robust cross-browser rendering */}
                 <linearGradient id="mainRail" gradientUnits="userSpaceOnUse" x1="50" y1="55" x2="840" y2="55">
@@ -266,9 +281,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* 1. MAIN BRANCH RAIL */}
               <line x1="50" y1="55" x2="840" y2="55" stroke="url(#mainRail)" strokeWidth="4" strokeLinecap="round" opacity="0.9" />
               {/* Main Fiber Stream Pulse */}
-              <line x1="50" y1="55" x2="840" y2="55" stroke="#34d399" strokeWidth="2" strokeDasharray="8 12" opacity="0.6">
-                <animate attributeName="stroke-dashoffset" from="0" to="-40" dur={speedConfig.dashDur} repeatCount="indefinite" />
-              </line>
+              <line className="hero-dash hero-dash-40" x1="50" y1="55" x2="840" y2="55" stroke="#34d399" strokeWidth="2" strokeDasharray="8 12" opacity="0.6" />
 
               {/* Main Branch Label */}
               <circle cx="73" cy="35" r="3.5" fill="#10b981" />
@@ -288,9 +301,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* Develop horizontal line */}
               <line x1="230" y1="125" x2="710" y2="125" stroke="url(#developRail)" strokeWidth="3" strokeDasharray="5 3" opacity="0.85" />
               {/* Develop Fiber Stream */}
-              <line x1="230" y1="125" x2="710" y2="125" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="6 8" opacity="0.7">
-                <animate attributeName="stroke-dashoffset" from="0" to="-28" dur={speedConfig.dashDur} repeatCount="indefinite" />
-              </line>
+              <line className="hero-dash hero-dash-28" x1="230" y1="125" x2="710" y2="125" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="6 8" opacity="0.7" />
 
               {/* Develop Branch Label */}
               <circle cx="218" cy="105" r="3" fill="#06b6d4" />
@@ -330,14 +341,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                 strokeWidth="3.5"
               />
               <path
+                className="hero-dash hero-dash-32"
                 d="M 710 125 C 745 125, 765 55, 810 55"
                 fill="none"
                 stroke="#f59e0b"
                 strokeWidth="2"
                 strokeDasharray="4 4"
-              >
-                <animate attributeName="stroke-dashoffset" from="0" to="-32" dur={speedConfig.dashDur} repeatCount="indefinite" />
-              </path>
+              />
 
               {/* 5. STATIC COMMITS (Each in its own vertical lane without overlap) */}
               {[
@@ -383,10 +393,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               ))}
 
               {/* Deploy Radar Beacon Ping (Pulses outward from the deploy node) */}
-              <circle cx="810" cy="55" r="14" fill="none" stroke="#10b981" strokeWidth="2" opacity="0.8">
-                <animate attributeName="r" values="11;24" dur={speedConfig.beaconDur} repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.85;0" dur={speedConfig.beaconDur} repeatCount="indefinite" />
-              </circle>
+              <circle className="hero-beacon" cx="810" cy="55" r="11" fill="none" stroke="#10b981" strokeWidth="2" />
 
               {/* 6. TRAVELING PULSE ORBS ALONG THE REAL CURVES */}
               {/* Orb 1: Flows along Feature Flow (main -> develop -> feature -> merge -> deploy) */}

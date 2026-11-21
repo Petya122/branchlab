@@ -7,6 +7,21 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Changed
+- **E2E in all three browser engines:** besides Chromium (desktop + Android), Playwright now also
+  runs on an iPhone (WebKit; every iPhone browser uses it) and desktop Firefox.
+- **`timeout-minutes` on every CI job** (15 / 30 / 10, rollback 10): a stuck job now fails quickly
+  instead of hanging for GitHub's default 6 hours.
+
+### Fixed
+- **Firefox: the homepage animation was blocked by the CSP** (~300 console errors, frozen dashes and
+  beacon). Firefox applies SVG `<animate>` (SMIL) animations of CSS properties as inline styles,
+  which `style-src 'self'` forbids. They are now CSS keyframe animations from the stylesheet
+  (speed via CSS variables) and respect `prefers-reduced-motion`. Found by the new Firefox E2E run.
+- The CSP E2E test ignores one documented WebKit false positive: Safari reports `style-src-attr`
+  for every native `<select>` under a strict CSP (reproduced on a blank page; Chromium and Firefox
+  report nothing). All other violations still fail the test.
+
 ### Fixed
 - **Arcane did not start after the Dependabot update to v3.0.1** (major version). Arcane v3 only
   reads `ARCANE_`-prefixed settings and exits while the old `APP_URL` / `ENCRYPTION_KEY` are set,

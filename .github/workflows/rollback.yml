@@ -18,6 +18,7 @@ jobs:
   rollback:
     name: Deploy ${{ inputs.image_tag }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: production
       url: https://branchlab.tech
